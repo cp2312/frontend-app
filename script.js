@@ -1,4 +1,4 @@
-const API = "https://backend-express-production-a427.up.railway.app";
+const API = "https://backend-express-production-a427.up.railway.app/api";
 
 async function cargarUsuarios() {
   const res = await fetch(`${API}/users`);
