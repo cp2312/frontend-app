@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cuentas Rosa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="cuentas-rosa.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Encabezado -->
+        <div class="header">
+            <button class="btn-volver" onclick="volverAlDashboard()">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+            <h1><i class="fas fa-female"></i> Cuentas Rosa</h1>
+            <div class="user-icon">
+                <i class="fas fa-user"></i>
+            </div>
+        </div>
+
+        <!-- Información de la semana -->
+        <div class="semana-info-card">
+            <h2><i class="fas fa-info-circle"></i> Información de la Semana</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Fecha:</span>
+                    <span id="fechaSemanaInfo" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Nombre:</span>
+                    <span id="nombreSemanaInfo" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Mes:</span>
+                    <span id="mesSemanaInfo" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">ID Semana:</span>
+                    <span id="idSemanaInfo" class="info-value">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Productos -->
+        <div class="tabla-productos">
+            <div class="tabla-header">
+                <h2><i class="fas fa-boxes"></i> Productos</h2>
+                <button class="btn-agregar" onclick="mostrarModalProducto()">
+                    <i class="fas fa-plus"></i> Agregar Producto
+                </button>
+            </div>
+            
+            <div class="tabla-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Valor</th>
+                            <th>Libras</th>
+                            <th>TOTAL</th>
+                            <th>Gasto</th>
+                            <th>Total Final</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productosBody">
+                        <!-- Los productos se cargarán aquí -->
+                        <tr class="no-data">
+                            <td colspan="7">No hay productos registrados</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3"><strong>SUMA TOTAL PRODUCTOS</strong></td>
+                            <td id="totalProductos">$0</td>
+                            <td id="totalGastos">$0</td>
+                            <td id="totalFinalProductos">$0</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabla de Gastos -->
+        <div class="tabla-gastos">
+            <div class="tabla-header">
+                <h2><i class="fas fa-money-bill-wave"></i> Gastos</h2>
+                <button class="btn-agregar" onclick="mostrarModalGasto()">
+                    <i class="fas fa-plus"></i> Agregar Gasto
+                </button>
+            </div>
+            
+            <div class="tabla-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>CONCEPTO</th>
+                            <th>VALOR</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gastosBody">
+                        <!-- Los gastos se cargarán aquí -->
+                        <tr class="no-data">
+                            <td colspan="3">No hay gastos registrados</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td><strong>TOTAL GASTOS</strong></td>
+                            <td id="totalGastosTabla">$0</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Resumen Final -->
+        <div class="resumen-final">
+            <div class="resumen-card">
+                <h2><i class="fas fa-calculator"></i> Resumen Final</h2>
+                <div class="resumen-grid">
+                    <div class="resumen-item">
+                        <span class="resumen-label">Total Productos:</span>
+                        <span id="resumenTotalProductos" class="resumen-valor">$0</span>
+                    </div>
+                    <div class="resumen-item">
+                        <span class="resumen-label">Total Gastos:</span>
+                        <span id="resumenTotalGastos" class="resumen-valor">$0</span>
+                    </div>
+                    <div class="resumen-item total">
+                        <span class="resumen-label">Total Final:</span>
+                        <span id="resumenTotalFinal" class="resumen-valor">$0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar/editar producto -->
+    <div class="modal" id="modalProducto">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-box"></i> <span id="modalProductoTitulo">Agregar Producto</span></h3>
+                <button class="btn-cerrar" onclick="cerrarModalProducto()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="productoNombre">Nombre del Producto:</label>
+                    <input type="text" id="productoNombre" class="form-control" placeholder="Ej: Costilla, Asadura">
+                </div>
+                <div class="form-group">
+                    <label for="productoPrecio">Precio Unitario:</label>
+                    <input type="number" id="productoPrecio" class="form-control" placeholder="Ej: 12000" min="0" step="100">
+                </div>
+                <div class="form-group">
+                    <label for="productoLibras">Libras:</label>
+                    <input type="number" id="productoLibras" class="form-control" placeholder="Ej: 149" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="productoGasto">Gasto Adicional (opcional):</label>
+                    <input type="number" id="productoGasto" class="form-control" placeholder="Ej: 0" min="0" step="100">
+                </div>
+                <div class="preview">
+                    <p><strong>Previsualización:</strong></p>
+                    <p>Total Bruto: <span id="previewTotalBruto">$0</span></p>
+                    <p>Total Final: <span id="previewTotalFinal">$0</span></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancelar" onclick="cerrarModalProducto()">Cancelar</button>
+                <button class="btn-guardar" onclick="guardarProducto()">Guardar Producto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar/editar gasto -->
+    <div class="modal" id="modalGasto">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-invoice-dollar"></i> <span id="modalGastoTitulo">Agregar Gasto</span></h3>
+                <button class="btn-cerrar" onclick="cerrarModalGasto()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="gastoConcepto">Concepto:</label>
+                    <input type="text" id="gastoConcepto" class="form-control" placeholder="Ej: Pintor, Transporte">
+                </div>
+                <div class="form-group">
+                    <label for="gastoValor">Valor:</label>
+                    <input type="number" id="gastoValor" class="form-control" placeholder="Ej: 300000" min="0" step="1000">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancelar" onclick="cerrarModalGasto()">Cancelar</button>
+                <button class="btn-guardar" onclick="guardarGasto()">Guardar Gasto</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="cuentas-rosa.js"></script>
+</body>
+</html>
