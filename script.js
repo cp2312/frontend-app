@@ -2,7 +2,7 @@ const API = "https://backend-express-production-a427.up.railway.app";
 
 async function api(path, opts={}) {
   const res = await fetch(API + path, opts);
-  if (!res.ok) throw new Error('API error: ' + res.status);
+  if (!res.ok) throw new Error('API error 2311: ' + res.status);
   return res.json();
 }
 
