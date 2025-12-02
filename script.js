@@ -26,20 +26,26 @@ async function guardarSemana() {
     const mensaje = document.getElementById("mensaje");
 
     if (!fecha || !nombre) {
-        mensaje.innerText = "Faltan datos.";
-        mensaje.style.color = "red";
+        mensaje.textContent = "Faltan datos. Por favor, completa todos los campos.";
+        mensaje.className = "mensaje error";
         return;
     }
 
-    // obtener mes
+    // Obtener mes
     const meses = [
-        "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-        "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
     ];
 
     const mes = meses[new Date(fecha).getMonth()];
 
     try {
+        // Mostrar indicador de carga en el botón
+        const btnGuardar = document.querySelector('.btn-guardar');
+        const originalText = btnGuardar.innerHTML;
+        btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        btnGuardar.disabled = true;
+
         const res = await fetch("https://backend-express-production-a427.up.railway.app/api/semanas", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -48,15 +54,75 @@ async function guardarSemana() {
 
         const data = await res.json();
 
-        mensaje.innerText = "Semana guardada correctamente";
-        mensaje.style.color = "green";
+        if (res.ok) {
+            mensaje.textContent = "✅ Semana guardada correctamente";
+            mensaje.className = "mensaje exito";
+            
+            // Limpiar campos después de guardar exitosamente
+            document.getElementById("nombreSemana").value = "";
+            
+            // Ocultar mensaje después de 3 segundos
+            setTimeout(() => {
+                mensaje.textContent = "";
+                mensaje.className = "mensaje";
+            }, 3000);
+        } else {
+            // Manejar errores del servidor
+            mensaje.textContent = `Error: ${data.message || "No se pudo guardar la semana"}`;
+            mensaje.className = "mensaje error";
+        }
 
     } catch (error) {
-        mensaje.innerText = "Error al guardar";
-        mensaje.style.color = "red";
+        console.error("Error al guardar:", error);
+        mensaje.textContent = "❌ Error de conexión. Verifica tu internet e intenta nuevamente.";
+        mensaje.className = "mensaje error";
+    } finally {
+        // Restaurar el botón a su estado original
+        const btnGuardar = document.querySelector('.btn-guardar');
+        if (btnGuardar) {
+            btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar Semana';
+            btnGuardar.disabled = false;
+        }
     }
 }
 
+// Función para inicializar la aplicación
+function inicializarApp() {
+    // Establecer fecha actual por defecto
+    const hoy = new Date();
+    const fechaFormateada = hoy.toISOString().split('T')[0];
+    const fechaInput = document.getElementById('fechaSemana');
+    
+    if (fechaInput) {
+        fechaInput.value = fechaFormateada;
+        // Establecer fecha mínima como hoy
+        fechaInput.min = fechaFormateada;
+    }
+    
+    // Añadir evento de tecla Enter en el campo de nombre
+    const nombreSemanaInput = document.getElementById('nombreSemana');
+    if (nombreSemanaInput) {
+        nombreSemanaInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                guardarSemana();
+            }
+        });
+    }
+    
+    // Añadir interactividad a las tarjetas
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Remover clase active de todas las tarjetas
+            cards.forEach(c => c.classList.remove('active'));
+            // Añadir clase active a la tarjeta clickeada
+            this.classList.add('active');
+        });
+    });
+}
+
+// Inicializar la aplicación cuando el DOM esté cargado
+document.addEventListener('DOMContentLoaded', inicializarApp);
 
 document.getElementById("formSemana").addEventListener("submit", async e => {
   e.preventDefault();
