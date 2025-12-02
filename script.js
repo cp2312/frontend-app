@@ -11,8 +11,10 @@ let semanaActual = {
     fecha: null,
     nombre: null,
     mes: null,
-    activa: false
+    activa: false,
+    id: null
 };
+
 
 // Función para guardar semana
 async function guardarSemana() {
@@ -41,7 +43,7 @@ async function guardarSemana() {
         btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
         btnGuardar.disabled = true;
 
-        const res = await fetch("https://backend-express-production-a427.up.railway.app/api/semanas", {
+        const res = await fetch(`${API_URL}/api/semanas`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ fecha, nombre_semana: nombre, mes })
@@ -53,11 +55,12 @@ async function guardarSemana() {
             mensaje.textContent = "✅ Semana guardada correctamente";
             mensaje.className = "mensaje exito";
             
-            // Actualizar semana actual
+            // Actualizar semana actual CON EL ID DEL BACKEND
             semanaActual = {
-                fecha: fecha,
-                nombre: nombre,
-                mes: mes,
+                id: data.id, // ← ID DEVUELTO POR EL BACKEND
+                fecha: data.fecha || fecha,
+                nombre: data.nombre_semana || nombre,
+                mes: data.mes || mes,
                 activa: true
             };
             
@@ -185,8 +188,14 @@ function irAModulo(url) {
         return;
     }
     
-    // Pasar la información de la semana actual a través de URL parameters
-    const semanaParam = encodeURIComponent(JSON.stringify(semanaActual));
+    // Pasar TODA la información de la semana actual incluyendo el ID
+    const semanaParam = encodeURIComponent(JSON.stringify({
+        id: semanaActual.id, // ← ID DE LA SEMANA
+        fecha: semanaActual.fecha,
+        nombre: semanaActual.nombre,
+        mes: semanaActual.mes,
+        activa: semanaActual.activa
+    }));
     window.location.href = `${url}?semana=${semanaParam}`;
 }
 
@@ -205,7 +214,8 @@ function reiniciarSemana() {
             fecha: null,
             nombre: null,
             mes: null,
-            activa: false
+            activa: false,
+            id: null
         };
         
         // Eliminar del localStorage
@@ -229,19 +239,66 @@ function reiniciarSemana() {
     }
 }
 
+// Función para obtener el ID de la semana si no lo tiene
+async function obtenerIdSemanaSiFalta() {
+    if (!semanaActual.fecha || !semanaActual.nombre || semanaActual.id) {
+        return; // No necesita buscar o ya tiene ID
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/api/semanas`);
+        
+        if (response.ok) {
+            const semanas = await response.json();
+            // Buscar por fecha y nombre
+            const semanaEncontrada = semanas.find(s => 
+                s.fecha === semanaActual.fecha && 
+                s.nombre_semana === semanaActual.nombre
+            );
+            
+            if (semanaEncontrada) {
+                semanaActual.id = semanaEncontrada.id;
+                // Actualizar localStorage
+                localStorage.setItem('semanaActual', JSON.stringify(semanaActual));
+                return true;
+            }
+        }
+    } catch (error) {
+        console.error('Error al buscar semana:', error);
+    }
+    
+    return false;
+}
+
 // Función para inicializar la aplicación
-function inicializarApp() {
+async function inicializarApp() {
     // Cargar semana actual del localStorage
     const semanaGuardada = localStorage.getItem('semanaActual');
     
     if (semanaGuardada) {
-        semanaActual = JSON.parse(semanaGuardada);
-        
-        // Si hay semana activa, desbloquear módulos
-        if (semanaActual.activa) {
-            actualizarInterfazSemana();
-            desbloquearModulos();
-        } else {
+        try {
+            semanaActual = JSON.parse(semanaGuardada);
+            
+            // Si está activa pero no tiene ID, intentar obtenerlo
+            if (semanaActual.activa && !semanaActual.id) {
+                const encontrado = await obtenerIdSemanaSiFalta();
+                
+                if (encontrado) {
+                    actualizarInterfazSemana();
+                    desbloquearModulos();
+                } else {
+                    console.warn('Semana activa pero sin ID encontrado, bloqueando módulos');
+                    bloquearModulos();
+                }
+            } else if (semanaActual.activa && semanaActual.id) {
+                // Si hay semana activa con ID, desbloquear módulos
+                actualizarInterfazSemana();
+                desbloquearModulos();
+            } else {
+                bloquearModulos();
+            }
+        } catch (error) {
+            console.error('Error al cargar semana:', error);
             bloquearModulos();
         }
     } else {
@@ -250,7 +307,7 @@ function inicializarApp() {
     }
     
     // Establecer fecha mínima como hoy si no hay semana activa
-    if (!semanaActual.activa) {
+    if (!semanaActual || !semanaActual.activa) {
         const hoy = new Date();
         const fechaFormateada = hoy.toISOString().split('T')[0];
         const fechaInput = document.getElementById('fechaSemana');
