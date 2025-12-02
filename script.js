@@ -15,7 +15,6 @@ let semanaActual = {
     activa: false
 };
 
-
 // Función para obtener la semana activa del servidor
 async function obtenerSemanaActivaServidor() {
     try {
@@ -36,15 +35,49 @@ async function obtenerSemanaActivaServidor() {
         }
     } catch (error) {
         console.error('Error al obtener semana activa:', error);
+        throw error;
     }
     return null;
 }
 
+// Función para verificar y actualizar semana activa
+async function verificarYActualizarSemanaActiva() {
+    try {
+        const semanaActiva = await obtenerSemanaActivaServidor();
+        
+        if (semanaActiva) {
+            semanaActual = semanaActiva;
+            localStorage.setItem('semanaActual', JSON.stringify(semanaActual));
+            actualizarInterfazSemana();
+            desbloquearModulos();
+            return true;
+        } else {
+            semanaActual = {
+                id: null,
+                fecha: null,
+                nombre: null,
+                mes: null,
+                activa: false
+            };
+            localStorage.removeItem('semanaActual');
+            actualizarInterfazSemana();
+            bloquearModulos();
+            return false;
+        }
+    } catch (error) {
+        console.error('Error al verificar semana activa:', error);
+        return false;
+    }
+}
+
 // Función para guardar semana
 async function guardarSemana() {
-    const fecha = document.getElementById("fechaSemana").value;
-    const nombre = document.getElementById("nombreSemana").value;
+    const fechaInput = document.getElementById("fechaSemana");
+    const nombreInput = document.getElementById("nombreSemana");
     const mensaje = document.getElementById("mensaje");
+
+    const fecha = fechaInput ? fechaInput.value : null;
+    const nombre = nombreInput ? nombreInput.value : null;
 
     if (!fecha || !nombre) {
         mensaje.textContent = "Faltan datos. Por favor, completa todos los campos.";
@@ -58,14 +91,16 @@ async function guardarSemana() {
         "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
     ];
 
-    const mes = meses[new Date(fecha).getMonth()];
+    const fechaObj = new Date(fecha);
+    const mes = meses[fechaObj.getMonth()];
 
     try {
         // Mostrar indicador de carga en el botón
         const btnGuardar = document.querySelector('.btn-guardar');
-        const originalText = btnGuardar.innerHTML;
-        btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-        btnGuardar.disabled = true;
+        if (btnGuardar) {
+            btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            btnGuardar.disabled = true;
+        }
 
         const res = await fetch(`${API}/api/semanas`, {
             method: "POST",
@@ -98,7 +133,16 @@ async function guardarSemana() {
             desbloquearModulos();
             
             // Limpiar campo de nombre
-            document.getElementById("nombreSemana").value = "";
+            if (nombreInput) {
+                nombreInput.value = "";
+            }
+            
+            // Deshabilitar campo de fecha
+            if (fechaInput) {
+                fechaInput.disabled = true;
+                fechaInput.style.backgroundColor = '#f0f0f0';
+                fechaInput.style.cursor = 'not-allowed';
+            }
             
             // Ocultar mensaje después de 3 segundos
             setTimeout(() => {
@@ -109,12 +153,22 @@ async function guardarSemana() {
             // Manejar errores del servidor
             mensaje.textContent = `Error: ${data.message || "No se pudo guardar la semana"}`;
             mensaje.className = "mensaje error";
+            
+            // IMPORTANTE: Verificar si ya hay una semana activa a pesar del error
+            setTimeout(async () => {
+                await verificarYActualizarSemanaActiva();
+            }, 500);
         }
 
     } catch (error) {
         console.error("Error al guardar:", error);
         mensaje.textContent = "❌ Error de conexión. Verifica tu internet e intenta nuevamente.";
         mensaje.className = "mensaje error";
+        
+        // En caso de error de conexión, también verificar semana activa
+        setTimeout(async () => {
+            await verificarYActualizarSemanaActiva();
+        }, 500);
     } finally {
         // Restaurar el botón a su estado original
         const btnGuardar = document.querySelector('.btn-guardar');
@@ -133,7 +187,7 @@ function actualizarInterfazSemana() {
     const fechaInput = document.getElementById('fechaSemana');
     const idDisplay = document.getElementById('idSemanaInfo');
     
-    if (semanaActual.activa) {
+    if (semanaActual.activa && semanaActual.fecha) {
         // Formatear fecha para mostrar
         const fechaObj = new Date(semanaActual.fecha);
         const fechaFormateada = fechaObj.toLocaleDateString('es-ES', {
@@ -143,9 +197,15 @@ function actualizarInterfazSemana() {
             day: 'numeric'
         });
         
-        fechaDisplay.textContent = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
-        nombreDisplay.textContent = semanaActual.nombre;
-        mesDisplay.textContent = semanaActual.mes;
+        if (fechaDisplay) {
+            fechaDisplay.textContent = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+        }
+        if (nombreDisplay) {
+            nombreDisplay.textContent = semanaActual.nombre || '-';
+        }
+        if (mesDisplay) {
+            mesDisplay.textContent = semanaActual.mes || '-';
+        }
         
         // Mostrar ID si existe
         if (idDisplay) {
@@ -160,9 +220,15 @@ function actualizarInterfazSemana() {
             fechaInput.style.cursor = 'not-allowed';
         }
     } else {
-        fechaDisplay.textContent = 'No hay semana activa';
-        nombreDisplay.textContent = '-';
-        mesDisplay.textContent = '-';
+        if (fechaDisplay) {
+            fechaDisplay.textContent = 'No hay semana activa';
+        }
+        if (nombreDisplay) {
+            nombreDisplay.textContent = '-';
+        }
+        if (mesDisplay) {
+            mesDisplay.textContent = '-';
+        }
         
         if (idDisplay) {
             idDisplay.textContent = '-';
@@ -173,6 +239,15 @@ function actualizarInterfazSemana() {
             fechaInput.disabled = false;
             fechaInput.style.backgroundColor = '#f9f9f9';
             fechaInput.style.cursor = 'pointer';
+            
+            // Establecer fecha mínima como hoy
+            const hoy = new Date();
+            const fechaFormateada = hoy.toISOString().split('T')[0];
+            
+            if (!fechaInput.value) {
+                fechaInput.value = fechaFormateada;
+            }
+            fechaInput.min = fechaFormateada;
         }
     }
 }
@@ -217,8 +292,15 @@ function bloquearModulos() {
 function irAModulo(url) {
     if (!semanaActual.activa) {
         const mensaje = document.getElementById("mensaje");
-        mensaje.textContent = "⚠️ Primero debes registrar una semana para acceder a los módulos";
-        mensaje.className = "mensaje error";
+        if (mensaje) {
+            mensaje.textContent = "⚠️ Primero debes registrar una semana para acceder a los módulos";
+            mensaje.className = "mensaje error";
+            
+            setTimeout(() => {
+                mensaje.textContent = "";
+                mensaje.className = "mensaje";
+            }, 3000);
+        }
         return;
     }
     
@@ -237,13 +319,27 @@ function irAModulo(url) {
 async function reiniciarSemana() {
     if (!semanaActual.activa) {
         const mensaje = document.getElementById("mensaje");
-        mensaje.textContent = "⚠️ No hay semana activa para reiniciar";
-        mensaje.className = "mensaje error";
+        if (mensaje) {
+            mensaje.textContent = "⚠️ No hay semana activa para reiniciar";
+            mensaje.className = "mensaje error";
+            
+            setTimeout(() => {
+                mensaje.textContent = "";
+                mensaje.className = "mensaje";
+            }, 3000);
+        }
         return;
     }
     
     if (confirm("¿Estás seguro de que quieres reiniciar la semana actual? Esto bloqueará todos los módulos.")) {
         try {
+            // Mostrar indicador de carga
+            const mensaje = document.getElementById("mensaje");
+            if (mensaje) {
+                mensaje.textContent = "Reiniciando semana...";
+                mensaje.className = "mensaje";
+            }
+            
             // Llamar al endpoint del backend para reiniciar
             const response = await fetch(`${API}/api/semanas/reiniciar`, {
                 method: "POST",
@@ -270,14 +366,15 @@ async function reiniciarSemana() {
                 bloquearModulos();
                 
                 // Mostrar mensaje de confirmación
-                const mensaje = document.getElementById("mensaje");
-                mensaje.textContent = "✅ Semana reiniciada. Puedes registrar una nueva semana";
-                mensaje.className = "mensaje exito";
-                
-                setTimeout(() => {
-                    mensaje.textContent = "";
-                    mensaje.className = "mensaje";
-                }, 3000);
+                if (mensaje) {
+                    mensaje.textContent = "✅ Semana reiniciada. Puedes registrar una nueva semana";
+                    mensaje.className = "mensaje exito";
+                    
+                    setTimeout(() => {
+                        mensaje.textContent = "";
+                        mensaje.className = "mensaje";
+                    }, 3000);
+                }
             } else {
                 const error = await response.json();
                 mostrarError(`Error al reiniciar: ${error.message || 'Error del servidor'}`);
@@ -290,15 +387,15 @@ async function reiniciarSemana() {
 }
 
 // Función para mostrar error
-function mostrarError(mensaje) {
-    const mensajeElem = document.getElementById("mensaje");
-    if (mensajeElem) {
-        mensajeElem.textContent = `❌ ${mensaje}`;
-        mensajeElem.className = "mensaje error";
+function mostrarError(mensajeTexto) {
+    const mensaje = document.getElementById("mensaje");
+    if (mensaje) {
+        mensaje.textContent = `❌ ${mensajeTexto}`;
+        mensaje.className = "mensaje error";
         
         setTimeout(() => {
-            mensajeElem.textContent = "";
-            mensajeElem.className = "mensaje";
+            mensaje.textContent = "";
+            mensaje.className = "mensaje";
         }, 3000);
     }
 }
@@ -307,76 +404,25 @@ function mostrarError(mensaje) {
 async function inicializarApp() {
     console.log('Inicializando aplicación...');
     
-    // Siempre obtener la semana activa del servidor primero
-    try {
-        const semanaActiva = await obtenerSemanaActivaServidor();
-        
-        if (semanaActiva) {
-            console.log('Semana activa encontrada en servidor:', semanaActiva);
-            
-            semanaActual = semanaActiva;
-            
-            // Guardar en localStorage para caché local
-            localStorage.setItem('semanaActual', JSON.stringify(semanaActual));
-            
-            actualizarInterfazSemana();
-            desbloquearModulos();
-        } else {
-            console.log('No hay semana activa en servidor');
-            semanaActual = {
-                id: null,
-                fecha: null,
-                nombre: null,
-                mes: null,
-                activa: false
-            };
-            
-            // Limpiar localStorage si no hay semana activa
-            localStorage.removeItem('semanaActual');
-            
-            bloquearModulos();
-        }
-    } catch (error) {
-        console.error('Error al conectar con servidor:', error);
-        // Si falla la conexión, intentar usar localStorage
-        const semanaGuardada = localStorage.getItem('semanaActual');
-        
-        if (semanaGuardada) {
-            try {
-                semanaActual = JSON.parse(semanaGuardada);
-                if (semanaActual.activa) {
-                    actualizarInterfazSemana();
-                    desbloquearModulos();
-                } else {
-                    bloquearModulos();
-                }
-            } catch (parseError) {
-                console.error('Error al parsear localStorage:', parseError);
-                bloquearModulos();
-            }
-        } else {
-            bloquearModulos();
-        }
+    // Limpiar mensaje inicial
+    const mensaje = document.getElementById("mensaje");
+    if (mensaje) {
+        mensaje.textContent = "";
+        mensaje.className = "mensaje";
     }
     
-    // Establecer fecha mínima como hoy si no hay semana activa
-    if (!semanaActual || !semanaActual.activa) {
+    // Verificar si hay una semana activa
+    const haySemanaActiva = await verificarYActualizarSemanaActiva();
+    
+    if (!haySemanaActiva) {
+        console.log('No hay semana activa, configurando fecha actual...');
         const hoy = new Date();
         const fechaFormateada = hoy.toISOString().split('T')[0];
         const fechaInput = document.getElementById('fechaSemana');
         
-        if (fechaInput) {
+        if (fechaInput && !fechaInput.value) {
             fechaInput.value = fechaFormateada;
             fechaInput.min = fechaFormateada;
-        }
-    } else {
-        // Si hay semana activa, establecer esa fecha
-        const fechaInput = document.getElementById('fechaSemana');
-        if (fechaInput && semanaActual.fecha) {
-            fechaInput.value = semanaActual.fecha;
-            fechaInput.disabled = true;
-            fechaInput.style.backgroundColor = '#f0f0f0';
-            fechaInput.style.cursor = 'not-allowed';
         }
     }
     
@@ -403,7 +449,32 @@ async function inicializarApp() {
             }
         });
     });
+    
+    // Añadir evento al botón de guardar semana
+    const btnGuardar = document.querySelector('.btn-guardar');
+    if (btnGuardar) {
+        btnGuardar.addEventListener('click', guardarSemana);
+    }
+    
+    // Añadir evento al botón de reiniciar semana (si existe)
+    const btnReiniciar = document.querySelector('.btn-reiniciar');
+    if (btnReiniciar) {
+        btnReiniciar.addEventListener('click', reiniciarSemana);
+    }
+    
+    console.log('Aplicación inicializada correctamente');
+    console.log('Estado semana actual:', semanaActual);
 }
 
 // Inicializar la aplicación cuando el DOM esté cargado
-document.addEventListener('DOMContentLoaded', inicializarApp);
+document.addEventListener('DOMContentLoaded', function() {
+    // Pequeño retraso para asegurar que todo el DOM esté listo
+    setTimeout(() => {
+        inicializarApp();
+    }, 100);
+});
+
+// Hacer funciones disponibles globalmente
+window.guardarSemana = guardarSemana;
+window.reiniciarSemana = reiniciarSemana;
+window.irAModulo = irAModulo;
