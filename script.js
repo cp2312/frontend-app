@@ -43,7 +43,7 @@ async function guardarSemana() {
         btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
         btnGuardar.disabled = true;
 
-        const res = await fetch(`${API_URL}/api/semanas`, {
+        const res = await fetch(`${API}/api/semanas`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ fecha, nombre_semana: nombre, mes })
@@ -246,7 +246,7 @@ async function obtenerIdSemanaSiFalta() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/api/semanas`);
+        const response = await fetch(`${API}/api/semanas`);
         
         if (response.ok) {
             const semanas = await response.json();
