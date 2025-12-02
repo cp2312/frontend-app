@@ -15,10 +15,11 @@ let semanaActual = {
     activa: false
 };
 
+
 // Función para obtener la semana activa del servidor
 async function obtenerSemanaActivaServidor() {
     try {
-        const response = await fetch(`${API}/api/semanas/activa`);
+        const response = await fetch(`${API}/api/semanas/activa/actual`);
         
         if (response.ok) {
             const semana = await response.json();
