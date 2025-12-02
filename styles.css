@@ -1,72 +1,101 @@
-/* Reset */
-* {
+body {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+    background: #f3f3f3;
 }
 
-body {
-    font-family: 'Arial', sans-serif;
-    background: #f5f7fa;
-    padding: 20px;
-}
-
-/* Contenedor principal */
 .container {
-    max-width: 480px; /* ideal para móviles */
-    margin: 0 auto;
-    text-align: center;
+    width: 90%;
+    margin: auto;
+    padding-top: 10px;
 }
 
-h1 {
-    font-size: 26px;
-    color: #333;
+/* Caja para registrar semana */
+.semana-box {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     margin-bottom: 25px;
 }
 
-/* Menú adaptable */
+.semana-box label {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.semana-box input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.btn-guardar {
+    width: 100%;
+    padding: 12px;
+    background: #0077ff;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.btn-guardar:hover {
+    background: #005fd1;
+}
+
+.mensaje {
+    margin-top: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Título */
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Menu */
 .menu {
-    display: flex;
-    flex-direction: column;
+    display: grid;
     gap: 15px;
 }
 
-/* Tarjetas tipo botón */
-.card {
-    width: 100%;
-    padding: 18px;
+/* Botones estilo tarjetas */
+.menu .card {
+    padding: 22px;
     border: none;
-    border-radius: 12px;
+    border-radius: 15px;
     font-size: 20px;
     font-weight: bold;
-    color: #222;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    transition: transform 0.2s;
-}
-
-.card:active {
-    transform: scale(0.97);
+    color: white;
 }
 
 /* Colores */
-.rosa {
-    background: #ffb3c6;
-}
-.prestamos {
-    background: #c3e8ff;
-}
-.cajas {
-    background: #c7ffcf;
+.rosa { background: #ff4fa1; }
+.prestamos { background: #ff9c2a; }
+.cajas { background: #2ecc71; }
+.otros { background: #6a5acd; }
+
+.card:active { opacity: 0.8; }
+
+/* Para tablets o pantallas medianas */
+@media (min-width: 600px) {
+    .menu {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-/* RESPONSIVE: pantallas pequeñas */
-@media (max-width: 400px) {
-    h1 {
-        font-size: 22px;
-    }
-    .card {
-        font-size: 18px;
-        padding: 15px;
+/* Para desktop */
+@media (min-width: 900px) {
+    .menu {
+        grid-template-columns: repeat(3, 1fr);
     }
 }

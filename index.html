@@ -10,6 +10,23 @@
 <body>
 
 <div class="container">
+
+    <h2>Registrar Semana</h2>
+
+    <div class="semana-box">
+        <label>Selecciona una fecha:</label>
+        <input type="date" id="fechaSemana">
+
+        <label>Nombre de la semana:</label>
+        <input type="text" id="nombreSemana" placeholder="Ej: Semana 1">
+
+        <button class="btn-guardar" onclick="guardarSemana()">
+            Guardar Semana
+        </button>
+
+        <p id="mensaje" class="mensaje"></p>
+    </div>
+
     <h1>Panel de Control</h1>
 
     <div class="menu">
@@ -26,10 +43,13 @@
             Cajas Finales
         </button>
 
+        <button class="card otros" onclick="location.href='otros-gastos.html'">
+            Otros Gastos
+        </button>
+
     </div>
 </div>
 
-</body>
-
 <script src="script.js"></script>
+</body>
 </html>

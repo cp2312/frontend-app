@@ -19,6 +19,45 @@ async function cargarSemanas() {
   await cargarResumen();
 }
 
+
+async function guardarSemana() {
+    const fecha = document.getElementById("fechaSemana").value;
+    const nombre = document.getElementById("nombreSemana").value;
+    const mensaje = document.getElementById("mensaje");
+
+    if (!fecha || !nombre) {
+        mensaje.innerText = "Faltan datos.";
+        mensaje.style.color = "red";
+        return;
+    }
+
+    // obtener mes
+    const meses = [
+        "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+        "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
+    ];
+
+    const mes = meses[new Date(fecha).getMonth()];
+
+    try {
+        const res = await fetch("https://backend-express-production-a427.up.railway.app/api/semanas", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fecha, nombre_semana: nombre, mes })
+        });
+
+        const data = await res.json();
+
+        mensaje.innerText = "Semana guardada correctamente";
+        mensaje.style.color = "green";
+
+    } catch (error) {
+        mensaje.innerText = "Error al guardar";
+        mensaje.style.color = "red";
+    }
+}
+
+
 document.getElementById("formSemana").addEventListener("submit", async e => {
   e.preventDefault();
   const fecha = document.getElementById("fecha").value;
