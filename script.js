@@ -1,4 +1,4 @@
-const API = "https://backend-express-production-a427.up.railway.app/api";
+const API = "https://backend-express-production-a427.up.railway.app";
 
 async function api(path, opts={}) {
   const res = await fetch(API + path, opts);
