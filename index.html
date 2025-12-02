@@ -1,54 +1,35 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <title>App Restaurante - Resumen</title>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard Principal</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main>
-    <h1>App Restaurante</h1>
 
-    <section id="semanas-section">
-      <h2>Semanas</h2>
-      <form id="formSemana">
-        <input type="date" id="fecha" required />
-        <input type="text" id="nombre_semana" placeholder="Nombre semana" required />
-        <input type="text" id="mes" placeholder="Mes" required />
-        <button type="submit">Crear semana</button>
-      </form>
-      <select id="selectSemana"></select>
-    </section>
+<div class="container">
+    <h1>Panel de Control</h1>
 
-    <section id="productos-section">
-      <h2>Productos</h2>
-      <form id="formProducto">
-        <input type="text" id="p_nombre" placeholder="Nombre" required />
-        <input type="number" id="p_precio" placeholder="Precio unitario" step="0.01" required />
-        <input type="number" id="p_libras" placeholder="Libras" step="0.01" required />
-        <input type="number" id="p_gasto" placeholder="Gasto" step="0.01" value="0" />
-        <button type="submit">Agregar producto</button>
-      </form>
-      <ul id="listaProductos"></ul>
-    </section>
+    <div class="menu">
 
-    <section id="otros-section">
-      <h2>Otros gastos</h2>
-      <form id="formOtro">
-        <input type="date" id="o_fecha" required />
-        <input type="text" id="o_concepto" placeholder="Concepto" required />
-        <input type="number" id="o_monto" placeholder="Monto" step="0.01" required />
-        <button type="submit">Agregar gasto</button>
-      </form>
-      <ul id="listaOtros"></ul>
-    </section>
+        <button class="card rosa" onclick="location.href='cuentas-rosa.html'">
+            Cuentas Rosa
+        </button>
 
-    <section id="summary-section">
-      <h2>Resumen</h2>
-      <div id="resumen"></div>
-    </section>
-  </main>
+        <button class="card prestamos" onclick="location.href='prestamos-gastos.html'">
+            Préstamos y Gastos
+        </button>
 
-  <script src="script.js"></script>
+        <button class="card cajas" onclick="location.href='cajas-finales.html'">
+            Cajas Finales
+        </button>
+
+    </div>
+</div>
+
 </body>
+
+<script src="script.js"></script>
 </html>

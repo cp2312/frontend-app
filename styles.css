@@ -1,8 +1,72 @@
-body { font-family: Arial, sans-serif; padding: 16px; max-width: 900px; margin: 0 auto;}
-h1 { text-align:center; }
-section { border:1px solid #ddd; padding:12px; margin:12px 0; border-radius:6px;}
-input, select, button { padding:8px; margin:6px; }
-button { cursor:pointer; }
-ul { list-style:none; padding-left:0; }
-li { padding:6px 0; border-bottom:1px solid #eee;}
-#resumen { background:#f7f7f7; padding:10px; border-radius:6px; }
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: #f5f7fa;
+    padding: 20px;
+}
+
+/* Contenedor principal */
+.container {
+    max-width: 480px; /* ideal para móviles */
+    margin: 0 auto;
+    text-align: center;
+}
+
+h1 {
+    font-size: 26px;
+    color: #333;
+    margin-bottom: 25px;
+}
+
+/* Menú adaptable */
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Tarjetas tipo botón */
+.card {
+    width: 100%;
+    padding: 18px;
+    border: none;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #222;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.2s;
+}
+
+.card:active {
+    transform: scale(0.97);
+}
+
+/* Colores */
+.rosa {
+    background: #ffb3c6;
+}
+.prestamos {
+    background: #c3e8ff;
+}
+.cajas {
+    background: #c7ffcf;
+}
+
+/* RESPONSIVE: pantallas pequeñas */
+@media (max-width: 400px) {
+    h1 {
+        font-size: 22px;
+    }
+    .card {
+        font-size: 18px;
+        padding: 15px;
+    }
+}
