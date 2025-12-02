@@ -135,6 +135,50 @@ body {
     transform: none;
 }
 
+/* Información de semana actual */
+.semana-actual-info {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #2ecc71;
+}
+
+.semana-actual-info h3 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.semana-actual-info h3 i {
+    color: #2ecc71;
+}
+
+.info-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.info-content p {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.info-content p:last-child {
+    border-bottom: none;
+}
+
+.info-content strong {
+    color: #555;
+    font-weight: 600;
+}
+
 /* Mensaje */
 .mensaje {
     margin-top: 15px;
@@ -198,6 +242,8 @@ body {
     align-items: center;
     justify-content: space-between;
     min-height: 90px;
+    position: relative;
+    overflow: hidden;
 }
 
 .card i {
@@ -214,6 +260,58 @@ body {
     transform: translateY(-2px);
 }
 
+/* Estilos para tarjetas bloqueadas */
+.card.bloqueado {
+    cursor: not-allowed;
+    opacity: 0.7;
+    filter: grayscale(0.8);
+}
+
+.card.bloqueado:hover {
+    transform: none;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card.bloqueado .bloqueado-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    border-radius: 16px;
+    z-index: 2;
+}
+
+.card.bloqueado .bloqueado-overlay i {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.card.bloqueado .bloqueado-overlay span {
+    font-size: 0.8rem;
+    font-weight: normal;
+    text-align: center;
+    padding: 0 10px;
+}
+
+/* Estilos para tarjetas desbloqueadas */
+.card.desbloqueado {
+    cursor: pointer;
+    opacity: 1;
+    filter: none;
+}
+
+.card.desbloqueado .bloqueado-overlay {
+    display: none;
+}
+
+/* Colores de las tarjetas */
 .rosa {
     background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
 }
@@ -230,6 +328,24 @@ body {
     background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
 }
 
+/* Información de módulos */
+.info-modulos {
+    margin-top: 15px;
+    padding: 12px;
+    background-color: #fff3cd;
+    border-radius: 8px;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-modulos i {
+    color: #f39c12;
+}
+
 /* Footer */
 .dashboard-footer {
     margin-top: 30px;
@@ -238,12 +354,50 @@ body {
     font-size: 0.85rem;
     padding-top: 20px;
     border-top: 1px solid #e0e6ed;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.btn-reiniciar {
+    background: linear-gradient(to right, #e74c3c, #c0392b);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 200px;
+    margin: 0 auto;
+}
+
+.btn-reiniciar:hover {
+    background: linear-gradient(to right, #c0392b, #a93226);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
 }
 
 /* Responsive */
 @media (min-width: 480px) {
     .menu {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .info-content {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+    }
+    
+    .info-content p {
+        flex-direction: column;
+        border-bottom: none;
+        text-align: center;
     }
 }
 
@@ -257,6 +411,17 @@ body {
         max-width: 700px;
         margin-left: auto;
         margin-right: auto;
+    }
+    
+    .dashboard-footer {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .btn-reiniciar {
+        width: auto;
+        margin: 0;
     }
 }
 
@@ -281,6 +446,16 @@ body {
 
 .fa-spin {
     animation: spin 1s linear infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.card.desbloqueado {
+    animation: pulse 0.5s ease-out;
 }
 
 /* Estado activo */

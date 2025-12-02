@@ -35,6 +35,15 @@
                 <i class="fas fa-save"></i> Guardar Semana
             </button>
             
+            <div class="semana-actual-info">
+                <h3><i class="fas fa-info-circle"></i> Semana Actual</h3>
+                <div class="info-content">
+                    <p><strong>Fecha:</strong> <span id="fechaActualDisplay">No hay semana activa</span></p>
+                    <p><strong>Nombre:</strong> <span id="nombreActualDisplay">-</span></p>
+                    <p><strong>Mes:</strong> <span id="mesActualDisplay">-</span></p>
+                </div>
+            </div>
+            
             <p id="mensaje" class="mensaje"></p>
         </div>
         
@@ -43,31 +52,54 @@
             <h2><i class="fas fa-th-large"></i> Módulos</h2>
             
             <div class="menu">
-                <button class="card rosa" onclick="location.href='cuentas-rosa.html'">
+                <button class="card rosa bloqueado" id="btnCuentasRosa" onclick="irAModulo('cuentas-rosa.html')">
                     <span>Cuentas Rosa</span>
                     <i class="fas fa-female"></i>
+                    <div class="bloqueado-overlay">
+                        <i class="fas fa-lock"></i>
+                        <span>Selecciona una fecha primero</span>
+                    </div>
                 </button>
                 
-                <button class="card prestamos" onclick="location.href='prestamos-gastos.html'">
+                <button class="card prestamos bloqueado" id="btnPrestamos" onclick="irAModulo('prestamos-gastos.html')">
                     <span>Préstamos y Gastos</span>
                     <i class="fas fa-hand-holding-usd"></i>
+                    <div class="bloqueado-overlay">
+                        <i class="fas fa-lock"></i>
+                        <span>Selecciona una fecha primero</span>
+                    </div>
                 </button>
                 
-                <button class="card cajas" onclick="location.href='cajas-finales.html'">
+                <button class="card cajas bloqueado" id="btnCajas" onclick="irAModulo('cajas-finales.html')">
                     <span>Cajas Finales</span>
                     <i class="fas fa-cash-register"></i>
+                    <div class="bloqueado-overlay">
+                        <i class="fas fa-lock"></i>
+                        <span>Selecciona una fecha primero</span>
+                    </div>
                 </button>
                 
-                <button class="card otros" onclick="location.href='otros-gastos.html'">
+                <button class="card otros bloqueado" id="btnOtros" onclick="irAModulo('otros-gastos.html')">
                     <span>Otros Gastos</span>
                     <i class="fas fa-file-invoice-dollar"></i>
+                    <div class="bloqueado-overlay">
+                        <i class="fas fa-lock"></i>
+                        <span>Selecciona una fecha primero</span>
+                    </div>
                 </button>
+            </div>
+            
+            <div class="info-modulos">
+                <p><i class="fas fa-exclamation-circle"></i> Los módulos estarán disponibles después de registrar una semana</p>
             </div>
         </div>
         
         <!-- Footer -->
         <div class="dashboard-footer">
             <p>Sistema de Gestión Financiera &copy; 2023</p>
+            <button class="btn-reiniciar" onclick="reiniciarSemana()">
+                <i class="fas fa-redo"></i> Reiniciar Semana
+            </button>
         </div>
     </div>
 

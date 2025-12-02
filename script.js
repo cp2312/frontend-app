@@ -2,24 +2,19 @@ const API = "https://backend-express-production-a427.up.railway.app";
 
 async function api(path, opts={}) {
   const res = await fetch(API + path, opts);
-  if (!res.ok) throw new Error('API error 2311: ' + res.status);
+  if (!res.ok) throw new Error('API error: ' + res.status);
   return res.json();
 }
 
-// Semanas
-async function cargarSemanas() {
-  const semanas = await api("/api/semanas");
-  const sel = document.getElementById("selectSemana");
-  sel.innerHTML = semanas.map(s => `<option value="${s.id}">${s.nombre_semana} | ${s.fecha}</option>`).join("");
-  if (semanas.length) {
-    sel.value = semanas[0].id;
-  }
-  await cargarProductos();
-  await cargarOtros();
-  await cargarResumen();
-}
+// Variables globales para almacenar la semana actual
+let semanaActual = {
+    fecha: null,
+    nombre: null,
+    mes: null,
+    activa: false
+};
 
-
+// Función para guardar semana
 async function guardarSemana() {
     const fecha = document.getElementById("fechaSemana").value;
     const nombre = document.getElementById("nombreSemana").value;
@@ -58,7 +53,24 @@ async function guardarSemana() {
             mensaje.textContent = "✅ Semana guardada correctamente";
             mensaje.className = "mensaje exito";
             
-            // Limpiar campos después de guardar exitosamente
+            // Actualizar semana actual
+            semanaActual = {
+                fecha: fecha,
+                nombre: nombre,
+                mes: mes,
+                activa: true
+            };
+            
+            // Guardar en localStorage
+            localStorage.setItem('semanaActual', JSON.stringify(semanaActual));
+            
+            // Actualizar interfaz
+            actualizarInterfazSemana();
+            
+            // Desbloquear módulos
+            desbloquearModulos();
+            
+            // Limpiar campo de nombre
             document.getElementById("nombreSemana").value = "";
             
             // Ocultar mensaje después de 3 segundos
@@ -86,17 +98,167 @@ async function guardarSemana() {
     }
 }
 
-// Función para inicializar la aplicación
-function inicializarApp() {
-    // Establecer fecha actual por defecto
-    const hoy = new Date();
-    const fechaFormateada = hoy.toISOString().split('T')[0];
+// Función para actualizar la interfaz con la semana actual
+function actualizarInterfazSemana() {
+    const fechaDisplay = document.getElementById('fechaActualDisplay');
+    const nombreDisplay = document.getElementById('nombreActualDisplay');
+    const mesDisplay = document.getElementById('mesActualDisplay');
     const fechaInput = document.getElementById('fechaSemana');
     
-    if (fechaInput) {
-        fechaInput.value = fechaFormateada;
-        // Establecer fecha mínima como hoy
-        fechaInput.min = fechaFormateada;
+    if (semanaActual.activa) {
+        // Formatear fecha para mostrar
+        const fechaObj = new Date(semanaActual.fecha);
+        const fechaFormateada = fechaObj.toLocaleDateString('es-ES', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        
+        fechaDisplay.textContent = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+        nombreDisplay.textContent = semanaActual.nombre;
+        mesDisplay.textContent = semanaActual.mes;
+        
+        // Deshabilitar el campo de fecha
+        if (fechaInput) {
+            fechaInput.value = semanaActual.fecha;
+            fechaInput.disabled = true;
+            fechaInput.style.backgroundColor = '#f0f0f0';
+            fechaInput.style.cursor = 'not-allowed';
+        }
+    } else {
+        fechaDisplay.textContent = 'No hay semana activa';
+        nombreDisplay.textContent = '-';
+        mesDisplay.textContent = '-';
+        
+        // Habilitar el campo de fecha
+        if (fechaInput) {
+            fechaInput.disabled = false;
+            fechaInput.style.backgroundColor = '#f9f9f9';
+            fechaInput.style.cursor = 'pointer';
+        }
+    }
+}
+
+// Función para desbloquear módulos
+function desbloquearModulos() {
+    const cards = document.querySelectorAll('.card');
+    const infoModulos = document.querySelector('.info-modulos');
+    
+    cards.forEach(card => {
+        card.classList.remove('bloqueado');
+        card.classList.add('desbloqueado');
+    });
+    
+    if (infoModulos) {
+        infoModulos.innerHTML = '<i class="fas fa-check-circle"></i> Módulos desbloqueados. ¡Puedes comenzar a trabajar!';
+        infoModulos.style.backgroundColor = '#d4edda';
+        infoModulos.style.borderColor = '#c3e6cb';
+        infoModulos.style.color = '#155724';
+    }
+}
+
+// Función para bloquear módulos
+function bloquearModulos() {
+    const cards = document.querySelectorAll('.card');
+    const infoModulos = document.querySelector('.info-modulos');
+    
+    cards.forEach(card => {
+        card.classList.add('bloqueado');
+        card.classList.remove('desbloqueado');
+    });
+    
+    if (infoModulos) {
+        infoModulos.innerHTML = '<i class="fas fa-exclamation-circle"></i> Los módulos estarán disponibles después de registrar una semana';
+        infoModulos.style.backgroundColor = '#fff3cd';
+        infoModulos.style.borderColor = '#ffeaa7';
+        infoModulos.style.color = '#856404';
+    }
+}
+
+// Función para ir a un módulo (con verificación)
+function irAModulo(url) {
+    if (!semanaActual.activa) {
+        const mensaje = document.getElementById("mensaje");
+        mensaje.textContent = "⚠️ Primero debes registrar una semana para acceder a los módulos";
+        mensaje.className = "mensaje error";
+        return;
+    }
+    
+    // Pasar la información de la semana actual a través de URL parameters
+    const semanaParam = encodeURIComponent(JSON.stringify(semanaActual));
+    window.location.href = `${url}?semana=${semanaParam}`;
+}
+
+// Función para reiniciar la semana
+function reiniciarSemana() {
+    if (!semanaActual.activa) {
+        const mensaje = document.getElementById("mensaje");
+        mensaje.textContent = "⚠️ No hay semana activa para reiniciar";
+        mensaje.className = "mensaje error";
+        return;
+    }
+    
+    if (confirm("¿Estás seguro de que quieres reiniciar la semana actual? Esto bloqueará todos los módulos.")) {
+        // Limpiar semana actual
+        semanaActual = {
+            fecha: null,
+            nombre: null,
+            mes: null,
+            activa: false
+        };
+        
+        // Eliminar del localStorage
+        localStorage.removeItem('semanaActual');
+        
+        // Actualizar interfaz
+        actualizarInterfazSemana();
+        
+        // Bloquear módulos
+        bloquearModulos();
+        
+        // Mostrar mensaje de confirmación
+        const mensaje = document.getElementById("mensaje");
+        mensaje.textContent = "✅ Semana reiniciada. Puedes registrar una nueva semana";
+        mensaje.className = "mensaje exito";
+        
+        setTimeout(() => {
+            mensaje.textContent = "";
+            mensaje.className = "mensaje";
+        }, 3000);
+    }
+}
+
+// Función para inicializar la aplicación
+function inicializarApp() {
+    // Cargar semana actual del localStorage
+    const semanaGuardada = localStorage.getItem('semanaActual');
+    
+    if (semanaGuardada) {
+        semanaActual = JSON.parse(semanaGuardada);
+        
+        // Si hay semana activa, desbloquear módulos
+        if (semanaActual.activa) {
+            actualizarInterfazSemana();
+            desbloquearModulos();
+        } else {
+            bloquearModulos();
+        }
+    } else {
+        // Si no hay semana guardada, bloquear módulos
+        bloquearModulos();
+    }
+    
+    // Establecer fecha mínima como hoy si no hay semana activa
+    if (!semanaActual.activa) {
+        const hoy = new Date();
+        const fechaFormateada = hoy.toISOString().split('T')[0];
+        const fechaInput = document.getElementById('fechaSemana');
+        
+        if (fechaInput) {
+            fechaInput.value = fechaFormateada;
+            fechaInput.min = fechaFormateada;
+        }
     }
     
     // Añadir evento de tecla Enter en el campo de nombre
@@ -109,108 +271,20 @@ function inicializarApp() {
         });
     }
     
-    // Añadir interactividad a las tarjetas
+    // Añadir interactividad a las tarjetas (solo si están desbloqueadas)
     const cards = document.querySelectorAll('.card');
     cards.forEach(card => {
         card.addEventListener('click', function() {
-            // Remover clase active de todas las tarjetas
-            cards.forEach(c => c.classList.remove('active'));
-            // Añadir clase active a la tarjeta clickeada
-            this.classList.add('active');
+            // Solo si está desbloqueada
+            if (!this.classList.contains('bloqueado')) {
+                // Remover clase active de todas las tarjetas
+                cards.forEach(c => c.classList.remove('active'));
+                // Añadir clase active a la tarjeta clickeada
+                this.classList.add('active');
+            }
         });
     });
 }
 
 // Inicializar la aplicación cuando el DOM esté cargado
 document.addEventListener('DOMContentLoaded', inicializarApp);
-
-document.getElementById("formSemana").addEventListener("submit", async e => {
-  e.preventDefault();
-  const fecha = document.getElementById("fecha").value;
-  const nombre_semana = document.getElementById("nombre_semana").value;
-  const mes = document.getElementById("mes").value;
-  await api("/api/semanas", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({fecha,nombre_semana,mes})
-  });
-  document.getElementById("formSemana").reset();
-  await cargarSemanas();
-});
-
-document.getElementById("selectSemana").addEventListener("change", async ()=> {
-  await cargarProductos();
-  await cargarOtros();
-  await cargarResumen();
-});
-
-// Productos
-document.getElementById("formProducto").addEventListener("submit", async e => {
-  e.preventDefault();
-  const nombre = document.getElementById("p_nombre").value;
-  const precio_unitario = Number(document.getElementById("p_precio").value);
-  const libras = Number(document.getElementById("p_libras").value);
-  const gasto = Number(document.getElementById("p_gasto").value);
-  const semana_id = Number(document.getElementById("selectSemana").value);
-  await api("/api/productos", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ nombre, precio_unitario, libras, gasto, semana_id })
-  });
-  document.getElementById("formProducto").reset();
-  await cargarProductos();
-  await cargarResumen();
-});
-
-async function cargarProductos() {
-  const semana_id = document.getElementById("selectSemana").value;
-  if (!semana_id) return;
-  const prods = await api(`/api/productos/semana/${semana_id}`);
-  const ul = document.getElementById("listaProductos");
-  ul.innerHTML = prods.map(p => `<li>${p.nombre} — ${p.libras} lb × ${p.precio_unitario} = ${p.total}  - gasto: ${p.gasto} - final: ${p.total_final}</li>`).join("");
-}
-
-// Otros gastos
-document.getElementById("formOtro").addEventListener("submit", async e => {
-  e.preventDefault();
-  const fecha = document.getElementById("o_fecha").value;
-  const concepto = document.getElementById("o_concepto").value;
-  const monto = Number(document.getElementById("o_monto").value);
-  const semana_id = Number(document.getElementById("selectSemana").value);
-  await api("/api/otros", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ fecha, concepto, monto, semana_id })
-  });
-  document.getElementById("formOtro").reset();
-  await cargarOtros();
-  await cargarResumen();
-});
-
-async function cargarOtros() {
-  const semana_id = document.getElementById("selectSemana").value;
-  if (!semana_id) return;
-  const otros = await api(`/api/otros/semana/${semana_id}`);
-  const ul = document.getElementById("listaOtros");
-  ul.innerHTML = otros.map(o => `<li>${o.fecha} — ${o.concepto} — ${o.monto}</li>`).join("");
-}
-
-// Resumen
-async function cargarResumen() {
-  const semana_id = document.getElementById("selectSemana").value;
-  if (!semana_id) return;
-  const sum = await api(`/api/semana/${semana_id}/summary`);
-  const div = document.getElementById("resumen");
-  div.innerHTML = `
-    <p><strong>Productos total:</strong> ${sum.productos_total}</p>
-    <p><strong>Préstamos (gastos):</strong> ${sum.prestamos_total}</p>
-    <p><strong>Pagos:</strong> ${sum.pagos_total}</p>
-    <p><strong>Otros gastos:</strong> ${sum.otros_total}</p>
-    <p><strong>Total gastos:</strong> ${sum.total_gastos}</p>
-    <p><strong>Ventas (cierres):</strong> ${sum.ventas_total}</p>
-    <p><strong>Neto (productos - gastos):</strong> ${sum.neto}</p>
-  `;
-}
-
-// init
-cargarSemanas();
