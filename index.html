@@ -1,17 +1,53 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Mi App FullStack</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <title>App Restaurante - Resumen</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h1>Usuarios</h1>
+  <main>
+    <h1>App Restaurante</h1>
 
-  <input id="nameInput" type="text" placeholder="Nuevo usuario">
-  <button onclick="agregarUsuario()">Guardar</button>
+    <section id="semanas-section">
+      <h2>Semanas</h2>
+      <form id="formSemana">
+        <input type="date" id="fecha" required />
+        <input type="text" id="nombre_semana" placeholder="Nombre semana" required />
+        <input type="text" id="mes" placeholder="Mes" required />
+        <button type="submit">Crear semana</button>
+      </form>
+      <select id="selectSemana"></select>
+    </section>
 
-  <ul id="listaUsuarios"></ul>
+    <section id="productos-section">
+      <h2>Productos</h2>
+      <form id="formProducto">
+        <input type="text" id="p_nombre" placeholder="Nombre" required />
+        <input type="number" id="p_precio" placeholder="Precio unitario" step="0.01" required />
+        <input type="number" id="p_libras" placeholder="Libras" step="0.01" required />
+        <input type="number" id="p_gasto" placeholder="Gasto" step="0.01" value="0" />
+        <button type="submit">Agregar producto</button>
+      </form>
+      <ul id="listaProductos"></ul>
+    </section>
+
+    <section id="otros-section">
+      <h2>Otros gastos</h2>
+      <form id="formOtro">
+        <input type="date" id="o_fecha" required />
+        <input type="text" id="o_concepto" placeholder="Concepto" required />
+        <input type="number" id="o_monto" placeholder="Monto" step="0.01" required />
+        <button type="submit">Agregar gasto</button>
+      </form>
+      <ul id="listaOtros"></ul>
+    </section>
+
+    <section id="summary-section">
+      <h2>Resumen</h2>
+      <div id="resumen"></div>
+    </section>
+  </main>
 
   <script src="script.js"></script>
 </body>

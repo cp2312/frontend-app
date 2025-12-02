@@ -1,15 +1,8 @@
-body {
-  font-family: Arial;
-  padding: 20px;
-}
-
-input {
-  padding: 8px;
-  margin-right: 10px;
-}
-
-button {
-  padding: 8px 15px;
-  background: blue;
-  color: white;
-}
+body { font-family: Arial, sans-serif; padding: 16px; max-width: 900px; margin: 0 auto;}
+h1 { text-align:center; }
+section { border:1px solid #ddd; padding:12px; margin:12px 0; border-radius:6px;}
+input, select, button { padding:8px; margin:6px; }
+button { cursor:pointer; }
+ul { list-style:none; padding-left:0; }
+li { padding:6px 0; border-bottom:1px solid #eee;}
+#resumen { background:#f7f7f7; padding:10px; border-radius:6px; }
