@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Préstamos y Gastos</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-file-invoice-dollar"></i> Control de Préstamos y Gastos</h1>
+            <div class="filtros">
+                <div class="filtro-item">
+                    <label for="semana">Semana:</label>
+                    <select id="semana">
+                        <!-- Las opciones se cargarán dinámicamente -->
+                    </select>
+                </div>
+                <button id="actualizar" class="btn-actualizar">
+                    <i class="fas fa-sync-alt"></i> Actualizar Datos
+                </button>
+                <button id="nuevo-registro" class="btn-actualizar">
+                    <i class="fas fa-plus"></i> Nuevo Registro
+                </button>
+            </div>
+        </header>
+
+        <!-- Información de la semana -->
+        <div class="semana-info-card">
+            <h2><i class="fas fa-info-circle"></i> Información de la Semana</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Fecha:</span>
+                    <span id="fechaSemanaInfo" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Nombre:</span>
+                    <span id="nombreSemanaInfo" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Mes:</span>
+                    <span id="mesSemanaInfo" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">ID Semana:</span>
+                    <span id="idSemanaInfo" class="info-value">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tablas-container">
+            <!-- Tabla para Manuel -->
+            <div class="tabla-persona">
+                <h2><i class="fas fa-user"></i> Manuel</h2>
+                <div class="tabla-wrapper">
+                    <table class="tabla-prestamos">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th colspan="2">Préstamos</th>
+                                <th colspan="2">Gastos</th>
+                                <th>Acciones</th>
+                            </tr>
+                            <tr>
+                                <th>#</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-manuel">
+                            <!-- Datos se cargarán con JavaScript -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="totales">
+                                <td colspan="2">Total préstamos: <span id="total-prestamos-manuel">0</span></td>
+                                <td colspan="2">Total gastos: <span id="total-gastos-manuel">0</span></td>
+                                <td colspan="2">Total final: <span id="total-final-manuel">0</span></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabla para Rocío -->
+            <div class="tabla-persona">
+                <h2><i class="fas fa-user"></i> Rocío</h2>
+                <div class="tabla-wrapper">
+                    <table class="tabla-prestamos">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th colspan="2">Préstamos</th>
+                                <th colspan="2">Gastos</th>
+                                <th>Acciones</th>
+                            </tr>
+                            <tr>
+                                <th>#</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-rocio">
+                            <!-- Datos se cargarán con JavaScript -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="totales">
+                                <td colspan="2">Total préstamos: <span id="total-prestamos-rocio">0</span></td>
+                                <td colspan="2">Total gastos: <span id="total-gastos-rocio">0</span></td>
+                                <td colspan="2">Total final: <span id="total-final-rocio">0</span></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabla para Miriam -->
+            <div class="tabla-persona">
+                <h2><i class="fas fa-user"></i> Miriam</h2>
+                <div class="tabla-wrapper">
+                    <table class="tabla-prestamos">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th colspan="2">Préstamos</th>
+                                <th colspan="2">Gastos</th>
+                                <th>Acciones</th>
+                            </tr>
+                            <tr>
+                                <th>#</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-miriam">
+                            <!-- Datos se cargarán con JavaScript -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="totales">
+                                <td colspan="2">Total préstamos: <span id="total-prestamos-miriam">0</span></td>
+                                <td colspan="2">Total gastos: <span id="total-gastos-miriam">0</span></td>
+                                <td colspan="2">Total final: <span id="total-final-miriam">0</span></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabla para Luz -->
+            <div class="tabla-persona">
+                <h2><i class="fas fa-user"></i> Luz</h2>
+                <div class="tabla-wrapper">
+                    <table class="tabla-prestamos">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th colspan="2">Préstamos</th>
+                                <th colspan="2">Gastos</th>
+                                <th>Acciones</th>
+                            </tr>
+                            <tr>
+                                <th>#</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-luz">
+                            <!-- Datos se cargarán con JavaScript -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="totales">
+                                <td colspan="2">Total préstamos: <span id="total-prestamos-luz">0</span></td>
+                                <td colspan="2">Total gastos: <span id="total-gastos-luz">0</span></td>
+                                <td colspan="2">Total final: <span id="total-final-luz">0</span></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabla para Samy -->
+            <div class="tabla-persona">
+                <h2><i class="fas fa-user"></i> Samy</h2>
+                <div class="tabla-wrapper">
+                    <table class="tabla-prestamos">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th colspan="2">Préstamos</th>
+                                <th colspan="2">Gastos</th>
+                                <th>Acciones</th>
+                            </tr>
+                            <tr>
+                                <th>#</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-samy">
+                            <!-- Datos se cargarán con JavaScript -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="totales">
+                                <td colspan="2">Total préstamos: <span id="total-prestamos-samy">0</span></td>
+                                <td colspan="2">Total gastos: <span id="total-gastos-samy">0</span></td>
+                                <td colspan="2">Total final: <span id="total-final-samy">0</span></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabla para Fredy -->
+            <div class="tabla-persona">
+                <h2><i class="fas fa-user"></i> Fredy</h2>
+                <div class="tabla-wrapper">
+                    <table class="tabla-prestamos">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th colspan="2">Préstamos</th>
+                                <th colspan="2">Gastos</th>
+                                <th>Acciones</th>
+                            </tr>
+                            <tr>
+                                <th>#</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-fredy">
+                            <!-- Datos se cargarán con JavaScript -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="totales">
+                                <td colspan="2">Total préstamos: <span id="total-prestamos-fredy">0</span></td>
+                                <td colspan="2">Total gastos: <span id="total-gastos-fredy">0</span></td>
+                                <td colspan="2">Total final: <span id="total-final-fredy">0</span></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="resumen-total">
+            <h3><i class="fas fa-chart-bar"></i> Resumen General</h3>
+            <div class="resumen-contenido">
+                <div class="resumen-item">
+                    <span>Total Préstamos:</span>
+                    <strong id="total-general-prestamos">0</strong>
+                </div>
+                <div class="resumen-item">
+                    <span>Total Gastos:</span>
+                    <strong id="total-general-gastos">0</strong>
+                </div>
+                <div class="resumen-item total">
+                    <span>Total Final:</span>
+                    <strong id="total-general-final">0</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar/editar registros -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="modal-titulo">Nuevo Registro</h3>
+            <form id="form-registro">
+                <input type="hidden" id="registro-id">
+                <div class="form-group">
+                    <label for="persona">Persona:</label>
+                    <select id="persona" required>
+                        <option value="Manuel">Manuel</option>
+                        <option value="Rocio">Rocío</option>
+                        <option value="Miriam">Miriam</option>
+                        <option value="Luz">Luz</option>
+                        <option value="Samy">Samy</option>
+                        <option value="Fredy">Fredy</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tipo">Tipo:</label>
+                    <select id="tipo" required>
+                        <option value="Prestamo">Préstamo</option>
+                        <option value="Gasto">Gasto</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="monto">Monto:</label>
+                    <input type="number" id="monto" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="concepto">Concepto:</label>
+                    <input type="text" id="concepto" required>
+                </div>
+                <div class="form-group">
+                    <label for="semana">Semana:</label>
+                    <select id="semana-modal" required>
+                        <!-- Las opciones se cargarán dinámicamente -->
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn-guardar">Guardar</button>
+                    <button type="button" class="btn-cancelar">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
