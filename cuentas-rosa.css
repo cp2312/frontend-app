@@ -547,4 +547,79 @@ tfoot td {
         margin: 0 2px;
         padding: 5px;
     }
+    /* Instrucciones */
+.instrucciones {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #e8f4fd;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+    font-size: 0.9rem;
+    color: #2c3e50;
+}
+
+.instrucciones i {
+    color: #3498db;
+    margin-right: 8px;
+}
+
+/* Input para libras */
+.input-libras {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 1rem;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.input-libras:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Botón Guardar Todo */
+.btn-guardar-todo {
+    background: linear-gradient(to right, #27ae60, #2ecc71);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.btn-guardar-todo:hover {
+    background: linear-gradient(to right, #229954, #27ae60);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+}
+
+.btn-guardar-todo:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Estado de los inputs */
+.input-libras:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+/* Mensaje de carga */
+.mensaje-carga {
+    text-align: center;
+    padding: 20px;
+    color: #7f8c8d;
+    font-style: italic;
+}
 }
