@@ -129,7 +129,7 @@ async function cargarProductosGuardados() {
     }
 }
 
-// Cargar gastos desde la API (usando la tabla productos con libras=0)
+// Cargar gastos desde la API (CORREGIDO)
 async function cargarGastos() {
     if (!semanaActual || !semanaActual.id) {
         console.error('No hay semana seleccionada');
@@ -143,16 +143,26 @@ async function cargarGastos() {
         if (response.ok) {
             const todosProductos = await response.json();
             
-            // Filtrar los que son gastos (productos que no están en la lista estática y tienen libras=0)
+            // Filtrar los que son gastos - CORRECCIÓN IMPORTANTE
             gastos = todosProductos.filter(producto => {
-                // Verificar si NO es un producto estático
+                // Un gasto es un producto con precio_unitario > 0 y libras = 0
+                // O un producto que no está en la lista estática
                 const esProductoEstatico = PRODUCTOS_ESTATICOS_DATA.some(p => 
                     p.nombre.toLowerCase() === producto.nombre.toLowerCase()
                 );
                 
-                return !esProductoEstatico && producto.libras === 0;
+                // Si NO es un producto estático, es un gasto
+                // O si es un producto estático pero tiene libras = 0 y precio > 0, también es gasto
+                return !esProductoEstatico || (producto.libras === 0 && producto.precio_unitario > 0);
+            }).filter(gasto => {
+                // Asegurarse de que no sea un producto estático con libras > 0
+                const esProductoEstaticoConLibras = PRODUCTOS_ESTATICOS_DATA.some(p => 
+                    p.nombre.toLowerCase() === gasto.nombre.toLowerCase() && gasto.libras > 0
+                );
+                return !esProductoEstaticoConLibras;
             });
             
+            console.log('Gastos cargados:', gastos);
             actualizarTablaGastos();
             actualizarResumen();
         }
@@ -195,7 +205,7 @@ function actualizarTablaProductos() {
                 </td>
                 <td class="valor-numerico" id="total-${index}">${formatearMoneda(total)}</td>
                 <td>
-                    <button class="btn-accion btn-guardar-individual" onclick="guardarProductoIndividual(${index})" ${producto.id ? 'style="display:none"' : ''}>
+                    <button class="btn-guardar-individual" onclick="guardarProductoIndividual(${index})" ${producto.id ? 'style="display:none"' : ''}>
                         <i class="fas fa-save"></i> Guardar
                     </button>
                     ${producto.id ? `<span class="guardado-label"><i class="fas fa-check"></i> Guardado</span>` : ''}
@@ -208,6 +218,7 @@ function actualizarTablaProductos() {
     
     // Actualizar totales en la tabla
     actualizarTotalesProductos(totalProductos);
+    actualizarResumen(); // Añadir esta línea para actualizar el resumen
 }
 
 // Actualizar total de un producto individual
@@ -244,16 +255,22 @@ function recalcularTotales() {
 
 // Actualizar totales de productos
 function actualizarTotalesProductos(totalProductos) {
-    document.getElementById('totalProductos').textContent = formatearMoneda(totalProductos);
+    const totalProductosElem = document.getElementById('totalProductos');
+    if (totalProductosElem) {
+        totalProductosElem.textContent = formatearMoneda(totalProductos);
+    }
 }
 
-// Actualizar tabla de gastos
+// Actualizar tabla de gastos (CORREGIDO)
 function actualizarTablaGastos() {
     const tbody = document.getElementById('gastosBody');
     
     if (!gastos || gastos.length === 0) {
         tbody.innerHTML = '<tr class="no-data"><td colspan="3">No hay gastos registrados</td></tr>';
-        document.getElementById('totalGastosTabla').textContent = formatearMoneda(0);
+        const totalGastosTablaElem = document.getElementById('totalGastosTabla');
+        if (totalGastosTablaElem) {
+            totalGastosTablaElem.textContent = formatearMoneda(0);
+        }
         return;
     }
 
@@ -261,8 +278,8 @@ function actualizarTablaGastos() {
     let totalGastos = 0;
 
     gastos.forEach(gasto => {
-        // Para gastos, el valor es el campo "gasto" o el precio_unitario si gasto es 0
-        const valorGasto = parseFloat(gasto.gasto) || parseFloat(gasto.precio_unitario) || 0;
+        // Para gastos, el valor es el campo "precio_unitario" (porque gasto es 0)
+        const valorGasto = parseFloat(gasto.precio_unitario) || 0;
         totalGastos += valorGasto;
         
         html += `
@@ -270,10 +287,10 @@ function actualizarTablaGastos() {
                 <td>${gasto.nombre}</td>
                 <td class="valor-numerico">${formatearMoneda(valorGasto)}</td>
                 <td>
-                    <button class="btn-accion btn-editar" onclick="editarGasto(${gasto.id})">
+                    <button class="btn-editar" onclick="editarGasto(${gasto.id})" style="background:none; border:none; color:#3498db; cursor:pointer; font-size:1.1rem; margin-right:10px;">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-accion btn-eliminar" onclick="eliminarGasto(${gasto.id})">
+                    <button class="btn-eliminar" onclick="eliminarGasto(${gasto.id})" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:1.1rem;">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -282,10 +299,16 @@ function actualizarTablaGastos() {
     });
 
     tbody.innerHTML = html;
-    document.getElementById('totalGastosTabla').textContent = formatearMoneda(totalGastos);
+    
+    const totalGastosTablaElem = document.getElementById('totalGastosTabla');
+    if (totalGastosTablaElem) {
+        totalGastosTablaElem.textContent = formatearMoneda(totalGastos);
+    }
+    
+    actualizarResumen(); // Asegurar que el resumen se actualice
 }
 
-// Actualizar resumen
+// Actualizar resumen (CORREGIDO)
 function actualizarResumen() {
     // Calcular total productos
     const totalProductos = productosEstaticos.reduce((sum, p) => {
@@ -294,17 +317,38 @@ function actualizarResumen() {
     
     // Calcular total gastos
     const totalGastos = gastos.reduce((sum, g) => {
-        const valorGasto = parseFloat(g.gasto) || parseFloat(g.precio_unitario) || 0;
+        const valorGasto = parseFloat(g.precio_unitario) || 0;
         return sum + valorGasto;
     }, 0);
     
     // Total final = total productos - total gastos
     const totalFinal = totalProductos - totalGastos;
     
+    console.log('Resumen:', { totalProductos, totalGastos, totalFinal });
+    
     // Actualizar UI
-    document.getElementById('resumenTotalProductos').textContent = formatearMoneda(totalProductos);
-    document.getElementById('resumenTotalGastos').textContent = formatearMoneda(totalGastos);
-    document.getElementById('resumenTotalFinal').textContent = formatearMoneda(totalFinal);
+    const resumenTotalProductosElem = document.getElementById('resumenTotalProductos');
+    const resumenTotalGastosElem = document.getElementById('resumenTotalGastos');
+    const resumenTotalFinalElem = document.getElementById('resumenTotalFinal');
+    
+    if (resumenTotalProductosElem) {
+        resumenTotalProductosElem.textContent = formatearMoneda(totalProductos);
+    }
+    
+    if (resumenTotalGastosElem) {
+        resumenTotalGastosElem.textContent = formatearMoneda(totalGastos);
+    }
+    
+    if (resumenTotalFinalElem) {
+        resumenTotalFinalElem.textContent = formatearMoneda(totalFinal);
+        
+        // Cambiar color si es negativo
+        if (totalFinal < 0) {
+            resumenTotalFinalElem.style.color = '#e74c3c';
+        } else {
+            resumenTotalFinalElem.style.color = '';
+        }
+    }
 }
 
 // Guardar un producto individual
@@ -453,7 +497,7 @@ function cerrarModalGasto() {
     gastoEditando = null;
 }
 
-// Guardar gasto
+// Guardar gasto (CORREGIDO)
 async function guardarGasto() {
     const concepto = document.getElementById('gastoConcepto').value.trim();
     const valor = parseFloat(document.getElementById('gastoValor').value);
@@ -463,24 +507,25 @@ async function guardarGasto() {
         return;
     }
     
-    if (valor < 0) {
-        mostrarError('El valor no puede ser negativo');
+    if (valor <= 0) {
+        mostrarError('El valor debe ser mayor a 0');
         return;
     }
     
-    // Para gastos, usamos la tabla productos pero con:
+    // Para gastos, usamos la tabla productos con:
     // - nombre = concepto del gasto
     // - precio_unitario = valor del gasto
     // - libras = 0
-    // - gasto = 0 (o podría ser el valor también)
-    
+    // - gasto = 0
     const gastoData = {
         nombre: concepto,
         precio_unitario: valor,
         libras: 0,
-        gasto: 0, // O podríamos usar valor aquí también
+        gasto: 0,
         semana_id: semanaActual.id
     };
+    
+    console.log('Enviando gasto:', gastoData);
     
     try {
         const response = await fetch(`${API_URL}/api/productos`, {
@@ -491,31 +536,82 @@ async function guardarGasto() {
             body: JSON.stringify(gastoData)
         });
         
+        console.log('Respuesta:', response.status);
+        
         if (response.ok) {
+            const data = await response.json();
+            console.log('Gasto guardado:', data);
+            
             cerrarModalGasto();
-            await cargarGastos(); // Recargar gastos
-            mostrarExito('Gasto agregado');
+            await cargarGastos(); // Recargar gastos desde el servidor
+            mostrarExito('Gasto agregado correctamente');
         } else {
             const error = await response.json();
+            console.error('Error del servidor:', error);
             mostrarError(error.error || 'Error al guardar el gasto');
         }
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error de conexión:', error);
         mostrarError('Error de conexión al guardar el gasto');
     }
 }
 
-// Editar gasto
-function editarGasto(id) {
+// Editar gasto (CORREGIDO)
+async function editarGasto(id) {
     const gasto = gastos.find(g => g.id === id);
     if (!gasto) return;
     
     gastoEditando = gasto;
     document.getElementById('modalGastoTitulo').textContent = 'Editar Gasto';
     document.getElementById('gastoConcepto').value = gasto.nombre;
-    document.getElementById('gastoValor').value = gasto.gasto || gasto.precio_unitario || 0;
+    document.getElementById('gastoValor').value = gasto.precio_unitario || 0;
     
     document.getElementById('modalGasto').style.display = 'flex';
+}
+
+// Actualizar gasto (nueva función)
+async function actualizarGasto() {
+    const concepto = document.getElementById('gastoConcepto').value.trim();
+    const valor = parseFloat(document.getElementById('gastoValor').value);
+    
+    if (!concepto || !valor) {
+        mostrarError('Por favor completa todos los campos');
+        return;
+    }
+    
+    if (valor <= 0) {
+        mostrarError('El valor debe ser mayor a 0');
+        return;
+    }
+    
+    const gastoData = {
+        nombre: concepto,
+        precio_unitario: valor,
+        libras: 0,
+        gasto: 0
+    };
+    
+    try {
+        const response = await fetch(`${API_URL}/api/productos/${gastoEditando.id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(gastoData)
+        });
+        
+        if (response.ok) {
+            cerrarModalGasto();
+            await cargarGastos();
+            mostrarExito('Gasto actualizado correctamente');
+        } else {
+            const error = await response.json();
+            mostrarError(error.error || 'Error al actualizar el gasto');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error de conexión al actualizar el gasto');
+    }
 }
 
 // Eliminar gasto
@@ -529,7 +625,7 @@ async function eliminarGasto(id) {
         
         if (response.ok) {
             await cargarGastos();
-            mostrarExito('Gasto eliminado');
+            mostrarExito('Gasto eliminado correctamente');
         } else {
             mostrarError('Error al eliminar el gasto');
         }
@@ -541,120 +637,27 @@ async function eliminarGasto(id) {
 
 // Mostrar mensaje de éxito
 function mostrarExito(mensaje) {
-    // Crear notificación temporal
-    const notification = document.createElement('div');
-    notification.className = 'notification exito';
-    notification.innerHTML = `
-        <i class="fas fa-check-circle"></i>
-        <span>${mensaje}</span>
-    `;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.classList.add('show');
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
-        }, 3000);
-    }, 10);
+    alert(`✅ ${mensaje}`); // Temporalmente usando alert
 }
 
 // Mostrar mensaje de error
 function mostrarError(mensaje) {
-    // Crear notificación temporal
-    const notification = document.createElement('div');
-    notification.className = 'notification error';
-    notification.innerHTML = `
-        <i class="fas fa-exclamation-circle"></i>
-        <span>${mensaje}</span>
-    `;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.classList.add('show');
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
-        }, 3000);
-    }, 10);
+    alert(`❌ ${mensaje}`); // Temporalmente usando alert
 }
 
-// CSS adicional para notificaciones (debe estar en styles-cuentas.css)
-const style = document.createElement('style');
-style.textContent = `
-    .notification {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 20px;
-        border-radius: 10px;
-        color: white;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        z-index: 10000;
-        transform: translateX(100%);
-        opacity: 0;
-        transition: all 0.3s ease;
-        max-width: 300px;
+// Actualizar la función guardarGasto en el modal
+document.addEventListener('DOMContentLoaded', function() {
+    const btnGuardarGasto = document.querySelector('.btn-guardar');
+    if (btnGuardarGasto) {
+        btnGuardarGasto.onclick = function() {
+            if (gastoEditando) {
+                actualizarGasto();
+            } else {
+                guardarGasto();
+            }
+        };
     }
-    
-    .notification.show {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    
-    .notification.exito {
-        background: linear-gradient(to right, #27ae60, #2ecc71);
-        border-left: 4px solid #2ecc71;
-    }
-    
-    .notification.error {
-        background: linear-gradient(to right, #c0392b, #e74c3c);
-        border-left: 4px solid #e74c3c;
-    }
-    
-    .notification i {
-        font-size: 1.2rem;
-    }
-    
-    .guardado-label {
-        color: #27ae60;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    
-    .btn-guardar-individual {
-        background: linear-gradient(to right, #3498db, #2980b9);
-        color: white;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    
-    .btn-guardar-individual:hover {
-        background: linear-gradient(to right, #2980b9, #2573a7);
-    }
-    
-    .btn-guardar-individual:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-`;
-document.head.appendChild(style);
+});
 
 // Inicializar la aplicación
 function inicializarApp() {
