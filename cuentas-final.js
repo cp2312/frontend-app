@@ -78,10 +78,8 @@ async function cargarDatos() {
         const totalEfectivo = cierres.reduce((sum, c) => sum + parseFloat(c.total_efectivo || 0), 0);
         const totalOtrosGastos = otrosGastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
         
-        // Total de préstamos (solo tipo 'Gasto')
-        const totalPrestamos = prestamos
-            .filter(p => p.tipo === 'Gasto')
-            .reduce((sum, p) => sum + parseFloat(p.monto || 0), 0);
+        // Total de préstamos (TODOS: Prestamo + Gasto)
+        const totalPrestamos = prestamos.reduce((sum, p) => sum + parseFloat(p.monto || 0), 0);
         
         // Actualizar tarjetas de estadísticas
         document.getElementById('totalProductos').textContent = formatMoneda(totalProductos);

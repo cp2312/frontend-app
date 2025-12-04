@@ -38,16 +38,6 @@
                 </div>
             </div>
 
-            <div class="card stat-card green">
-                <div class="stat-icon">
-                    <i class="fas fa-cash-register"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>Efectivo Total (Cierres)</h3>
-                    <p class="stat-value" id="totalEfectivo">$0.00</p>
-                </div>
-            </div>
-
             <div class="card stat-card orange">
                 <div class="stat-icon">
                     <i class="fas fa-receipt"></i>
@@ -55,6 +45,26 @@
                 <div class="stat-content">
                     <h3>Otros Gastos</h3>
                     <p class="stat-value" id="totalOtrosGastos">$0.00</p>
+                </div>
+            </div>
+
+            <div class="card stat-card red">
+                <div class="stat-icon">
+                    <i class="fas fa-hand-holding-usd"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Préstamos/Gastos</h3>
+                    <p class="stat-value" id="totalPrestamos">$0.00</p>
+                </div>
+            </div>
+
+            <div class="card stat-card green">
+                <div class="stat-icon">
+                    <i class="fas fa-cash-register"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Efectivo Total</h3>
+                    <p class="stat-value" id="totalEfectivo">$0.00</p>
                 </div>
             </div>
 
@@ -97,7 +107,7 @@
         <!-- Tabla de Total por Persona -->
         <div class="card">
             <div class="card-header">
-                <h2><i class="fas fa-users"></i> Total por Persona (Productos)</h2>
+                <h2><i class="fas fa-users"></i> Total de Préstamos por Persona</h2>
             </div>
             
             <div class="table-container">
@@ -105,7 +115,7 @@
                     <thead>
                         <tr>
                             <th>Persona</th>
-                            <th>Total</th>
+                            <th>Total Préstamos</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -114,8 +124,8 @@
                 </table>
                 <div class="empty-state" id="sinPersonas">
                     <i class="fas fa-users"></i>
-                    <h3>No hay datos por persona</h3>
-                    <p>Los productos no tienen asignación por persona</p>
+                    <h3>No hay préstamos registrados</h3>
+                    <p>No se registraron préstamos en esta semana</p>
                 </div>
             </div>
         </div>
