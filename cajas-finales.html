@@ -45,7 +45,7 @@
                 </div>
                 <div class="info-item">
                     <span class="info-label">ID Semana:</span>
-                    <span id="idSemanaInfo" class="info-value">-</span>
+                    <span id="idSemanaInfo" class="info-value">1</span>
                 </div>
             </div>
         </div>
@@ -90,64 +90,76 @@
                     </div>
                 </div>
                 <div class="caja-content">
-                    <table class="tabla-caja">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th colspan="2">PRESTAMOS</th>
-                                <th id="prestamos-sabado" class="prestamo-valor">$0</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="label">BASE</td>
-                                <td class="valor" id="base-sabado">$0</td>
-                                <td class="observacion" id="base-obs-sabado"></td>
-                                <td class="prestamo-cantidad" id="base-prestamo-sabado">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">LLEVAR</td>
-                                <td class="valor" id="llevar-sabado">$0</td>
-                                <td class="observacion" id="llevar-obs-sabado"></td>
-                                <td class="prestamo-cantidad" id="llevar-prestamo-sabado">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">VENTAS</td>
-                                <td class="valor" id="ventas-sabado">$0</td>
-                                <td class="observacion" id="ventas-obs-sabado"></td>
-                                <td class="prestamo-cantidad" id="ventas-prestamo-sabado">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">TALONARIOS</td>
-                                <td class="valor" id="talonarios-sabado">$0</td>
-                                <td class="observacion" id="talonarios-obs-sabado"></td>
-                                <td class="prestamo-cantidad" id="talonarios-prestamo-sabado">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">OTRO</td>
-                                <td class="valor" id="otro-sabado">$0</td>
-                                <td class="observacion" id="otro-obs-sabado"></td>
-                                <td class="prestamo-cantidad" id="otro-prestamo-sabado">$0</td>
-                            </tr>
-                            <tr class="separator">
-                                <td colspan="4"></td>
-                            </tr>
-                            <tr class="total-fila">
-                                <td class="label">TOTAL</td>
-                                <td class="valor" id="total-sabado-detalle">$0</td>
-                                <td class="total-prestamos">TOTAL PRÉSTAMOS:</td>
-                                <td class="valor" id="total-prestamos-sabado">$0</td>
-                            </tr>
-                            <tr class="separator">
-                                <td colspan="4"></td>
-                            </tr>
-                            <tr class="diferencia-fila">
-                                <td colspan="2" class="label">TOTAL DIFERENCIA:</td>
-                                <td></td>
-                                <td class="valor diferencia" id="diferencia-sabado">$0</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="tabla-doble">
+                        <!-- Tabla izquierda: Conceptos básicos -->
+                        <div class="tabla-conceptos">
+                            <table class="tabla-caja">
+                                <tbody>
+                                    <tr>
+                                        <td class="label">Total efectivo:</td>
+                                        <td class="valor" id="total-efectivo-sabado">$0</td>
+                                    </tr>
+                                    <tr class="separator">
+                                        <td colspan="2"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">BASE</td>
+                                        <td class="valor" id="base-sabado">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">LLEVAR</td>
+                                        <td class="valor" id="llevar-sabado">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">VENTAS</td>
+                                        <td class="valor" id="ventas-sabado">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">TALONARIOS</td>
+                                        <td class="valor" id="talonarios-sabado">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">OTRO</td>
+                                        <td class="valor" id="otro-sabado">$0</td>
+                                    </tr>
+                                    <tr class="separator">
+                                        <td colspan="2"></td>
+                                    </tr>
+                                    <tr class="total-fila">
+                                        <td class="label">TOTAL</td>
+                                        <td class="valor" id="total-sabado-detalle">$0</td>
+                                    </tr>
+                                    <tr class="diferencia-fila">
+                                        <td class="label">TOTAL DIFERENCIA:</td>
+                                        <td class="valor diferencia" id="diferencia-sabado">$0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Tabla derecha: Préstamos -->
+                        <div class="tabla-prestamos">
+                            <table class="tabla-caja">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">PRÉSTAMOS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prestamos-body-sabado">
+                                    <!-- Los préstamos se cargarán dinámicamente -->
+                                    <tr>
+                                        <td colspan="2" class="sin-prestamos">No hay préstamos</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td class="label">TOTAL PRÉSTAMOS:</td>
+                                        <td class="valor" id="total-prestamos-sabado">$0</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -162,64 +174,76 @@
                     </div>
                 </div>
                 <div class="caja-content">
-                    <table class="tabla-caja">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th colspan="2">PRESTAMOS</th>
-                                <th id="prestamos-domingo-1" class="prestamo-valor">$0</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="label">BASE</td>
-                                <td class="valor" id="base-domingo-1">$0</td>
-                                <td class="observacion" id="base-obs-domingo-1"></td>
-                                <td class="prestamo-cantidad" id="base-prestamo-domingo-1">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">LLEVAR</td>
-                                <td class="valor" id="llevar-domingo-1">$0</td>
-                                <td class="observacion" id="llevar-obs-domingo-1"></td>
-                                <td class="prestamo-cantidad" id="llevar-prestamo-domingo-1">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">VENTAS</td>
-                                <td class="valor" id="ventas-domingo-1">$0</td>
-                                <td class="observacion" id="ventas-obs-domingo-1"></td>
-                                <td class="prestamo-cantidad" id="ventas-prestamo-domingo-1">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">TALONARIOS</td>
-                                <td class="valor" id="talonarios-domingo-1">$0</td>
-                                <td class="observacion" id="talonarios-obs-domingo-1"></td>
-                                <td class="prestamo-cantidad" id="talonarios-prestamo-domingo-1">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">OTRO</td>
-                                <td class="valor" id="otro-domingo-1">$0</td>
-                                <td class="observacion" id="otro-obs-domingo-1"></td>
-                                <td class="prestamo-cantidad" id="otro-prestamo-domingo-1">$0</td>
-                            </tr>
-                            <tr class="separator">
-                                <td colspan="4"></td>
-                            </tr>
-                            <tr class="total-fila">
-                                <td class="label">TOTAL</td>
-                                <td class="valor" id="total-domingo-1-detalle">$0</td>
-                                <td class="total-prestamos">TOTAL PRÉSTAMOS:</td>
-                                <td class="valor" id="total-prestamos-domingo-1">$0</td>
-                            </tr>
-                            <tr class="separator">
-                                <td colspan="4"></td>
-                            </tr>
-                            <tr class="diferencia-fila">
-                                <td colspan="2" class="label">TOTAL DIFERENCIA:</td>
-                                <td></td>
-                                <td class="valor diferencia" id="diferencia-domingo-1">$0</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="tabla-doble">
+                        <!-- Tabla izquierda: Conceptos básicos -->
+                        <div class="tabla-conceptos">
+                            <table class="tabla-caja">
+                                <tbody>
+                                    <tr>
+                                        <td class="label">Total efectivo:</td>
+                                        <td class="valor" id="total-efectivo-domingo-1">$0</td>
+                                    </tr>
+                                    <tr class="separator">
+                                        <td colspan="2"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">BASE</td>
+                                        <td class="valor" id="base-domingo-1">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">LLEVAR</td>
+                                        <td class="valor" id="llevar-domingo-1">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">VENTAS</td>
+                                        <td class="valor" id="ventas-domingo-1">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">TALONARIOS</td>
+                                        <td class="valor" id="talonarios-domingo-1">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">OTRO</td>
+                                        <td class="valor" id="otro-domingo-1">$0</td>
+                                    </tr>
+                                    <tr class="separator">
+                                        <td colspan="2"></td>
+                                    </tr>
+                                    <tr class="total-fila">
+                                        <td class="label">TOTAL</td>
+                                        <td class="valor" id="total-domingo-1-detalle">$0</td>
+                                    </tr>
+                                    <tr class="diferencia-fila">
+                                        <td class="label">TOTAL DIFERENCIA:</td>
+                                        <td class="valor diferencia" id="diferencia-domingo-1">$0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Tabla derecha: Préstamos -->
+                        <div class="tabla-prestamos">
+                            <table class="tabla-caja">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">PRÉSTAMOS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prestamos-body-domingo-1">
+                                    <!-- Los préstamos se cargarán dinámicamente -->
+                                    <tr>
+                                        <td colspan="2" class="sin-prestamos">No hay préstamos</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td class="label">TOTAL PRÉSTAMOS:</td>
+                                        <td class="valor" id="total-prestamos-domingo-1">$0</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -234,64 +258,76 @@
                     </div>
                 </div>
                 <div class="caja-content">
-                    <table class="tabla-caja">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th colspan="2">PRESTAMOS</th>
-                                <th id="prestamos-domingo-2" class="prestamo-valor">$0</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="label">BASE</td>
-                                <td class="valor" id="base-domingo-2">$0</td>
-                                <td class="observacion" id="base-obs-domingo-2"></td>
-                                <td class="prestamo-cantidad" id="base-prestamo-domingo-2">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">LLEVAR</td>
-                                <td class="valor" id="llevar-domingo-2">$0</td>
-                                <td class="observacion" id="llevar-obs-domingo-2"></td>
-                                <td class="prestamo-cantidad" id="llevar-prestamo-domingo-2">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">VENTAS</td>
-                                <td class="valor" id="ventas-domingo-2">$0</td>
-                                <td class="observacion" id="ventas-obs-domingo-2"></td>
-                                <td class="prestamo-cantidad" id="ventas-prestamo-domingo-2">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">TALONARIOS</td>
-                                <td class="valor" id="talonarios-domingo-2">$0</td>
-                                <td class="observacion" id="talonarios-obs-domingo-2"></td>
-                                <td class="prestamo-cantidad" id="talonarios-prestamo-domingo-2">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">OTRO</td>
-                                <td class="valor" id="otro-domingo-2">$0</td>
-                                <td class="observacion" id="otro-obs-domingo-2"></td>
-                                <td class="prestamo-cantidad" id="otro-prestamo-domingo-2">$0</td>
-                            </tr>
-                            <tr class="separator">
-                                <td colspan="4"></td>
-                            </tr>
-                            <tr class="total-fila">
-                                <td class="label">TOTAL</td>
-                                <td class="valor" id="total-domingo-2-detalle">$0</td>
-                                <td class="total-prestamos">TOTAL PRÉSTAMOS:</td>
-                                <td class="valor" id="total-prestamos-domingo-2">$0</td>
-                            </tr>
-                            <tr class="separator">
-                                <td colspan="4"></td>
-                            </tr>
-                            <tr class="diferencia-fila">
-                                <td colspan="2" class="label">TOTAL DIFERENCIA:</td>
-                                <td></td>
-                                <td class="valor diferencia" id="diferencia-domingo-2">$0</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="tabla-doble">
+                        <!-- Tabla izquierda: Conceptos básicos -->
+                        <div class="tabla-conceptos">
+                            <table class="tabla-caja">
+                                <tbody>
+                                    <tr>
+                                        <td class="label">Total efectivo:</td>
+                                        <td class="valor" id="total-efectivo-domingo-2">$0</td>
+                                    </tr>
+                                    <tr class="separator">
+                                        <td colspan="2"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">BASE</td>
+                                        <td class="valor" id="base-domingo-2">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">LLEVAR</td>
+                                        <td class="valor" id="llevar-domingo-2">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">VENTAS</td>
+                                        <td class="valor" id="ventas-domingo-2">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">TALONARIOS</td>
+                                        <td class="valor" id="talonarios-domingo-2">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">OTRO</td>
+                                        <td class="valor" id="otro-domingo-2">$0</td>
+                                    </tr>
+                                    <tr class="separator">
+                                        <td colspan="2"></td>
+                                    </tr>
+                                    <tr class="total-fila">
+                                        <td class="label">TOTAL</td>
+                                        <td class="valor" id="total-domingo-2-detalle">$0</td>
+                                    </tr>
+                                    <tr class="diferencia-fila">
+                                        <td class="label">TOTAL DIFERENCIA:</td>
+                                        <td class="valor diferencia" id="diferencia-domingo-2">$0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Tabla derecha: Préstamos -->
+                        <div class="tabla-prestamos">
+                            <table class="tabla-caja">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">PRÉSTAMOS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prestamos-body-domingo-2">
+                                    <!-- Los préstamos se cargarán dinámicamente -->
+                                    <tr>
+                                        <td colspan="2" class="sin-prestamos">No hay préstamos</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td class="label">TOTAL PRÉSTAMOS:</td>
+                                        <td class="valor" id="total-prestamos-domingo-2">$0</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -309,64 +345,76 @@
                     </div>
                 </div>
                 <div class="caja-content">
-                    <table class="tabla-caja">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th colspan="2">PRESTAMOS</th>
-                                <th id="prestamos-lunes" class="prestamo-valor">$0</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="label">BASE</td>
-                                <td class="valor" id="base-lunes">$0</td>
-                                <td class="observacion" id="base-obs-lunes"></td>
-                                <td class="prestamo-cantidad" id="base-prestamo-lunes">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">LLEVAR</td>
-                                <td class="valor" id="llevar-lunes">$0</td>
-                                <td class="observacion" id="llevar-obs-lunes"></td>
-                                <td class="prestamo-cantidad" id="llevar-prestamo-lunes">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">VENTAS</td>
-                                <td class="valor" id="ventas-lunes">$0</td>
-                                <td class="observacion" id="ventas-obs-lunes"></td>
-                                <td class="prestamo-cantidad" id="ventas-prestamo-lunes">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">TALONARIOS</td>
-                                <td class="valor" id="talonarios-lunes">$0</td>
-                                <td class="observacion" id="talonarios-obs-lunes"></td>
-                                <td class="prestamo-cantidad" id="talonarios-prestamo-lunes">$0</td>
-                            </tr>
-                            <tr>
-                                <td class="label">OTRO</td>
-                                <td class="valor" id="otro-lunes">$0</td>
-                                <td class="observacion" id="otro-obs-lunes"></td>
-                                <td class="prestamo-cantidad" id="otro-prestamo-lunes">$0</td>
-                            </tr>
-                            <tr class="separator">
-                                <td colspan="4"></td>
-                            </tr>
-                            <tr class="total-fila">
-                                <td class="label">TOTAL</td>
-                                <td class="valor" id="total-lunes-detalle">$0</td>
-                                <td class="total-prestamos">TOTAL PRÉSTAMOS:</td>
-                                <td class="valor" id="total-prestamos-lunes">$0</td>
-                            </tr>
-                            <tr class="separator">
-                                <td colspan="4"></td>
-                            </tr>
-                            <tr class="diferencia-fila">
-                                <td colspan="2" class="label">TOTAL DIFERENCIA:</td>
-                                <td></td>
-                                <td class="valor diferencia" id="diferencia-lunes">$0</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="tabla-doble">
+                        <!-- Tabla izquierda: Conceptos básicos -->
+                        <div class="tabla-conceptos">
+                            <table class="tabla-caja">
+                                <tbody>
+                                    <tr>
+                                        <td class="label">Total efectivo:</td>
+                                        <td class="valor" id="total-efectivo-lunes">$0</td>
+                                    </tr>
+                                    <tr class="separator">
+                                        <td colspan="2"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">BASE</td>
+                                        <td class="valor" id="base-lunes">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">LLEVAR</td>
+                                        <td class="valor" id="llevar-lunes">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">VENTAS</td>
+                                        <td class="valor" id="ventas-lunes">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">TALONARIOS</td>
+                                        <td class="valor" id="talonarios-lunes">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">OTRO</td>
+                                        <td class="valor" id="otro-lunes">$0</td>
+                                    </tr>
+                                    <tr class="separator">
+                                        <td colspan="2"></td>
+                                    </tr>
+                                    <tr class="total-fila">
+                                        <td class="label">TOTAL</td>
+                                        <td class="valor" id="total-lunes-detalle">$0</td>
+                                    </tr>
+                                    <tr class="diferencia-fila">
+                                        <td class="label">TOTAL DIFERENCIA:</td>
+                                        <td class="valor diferencia" id="diferencia-lunes">$0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Tabla derecha: Préstamos -->
+                        <div class="tabla-prestamos">
+                            <table class="tabla-caja">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">PRÉSTAMOS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prestamos-body-lunes">
+                                    <!-- Los préstamos se cargarán dinámicamente -->
+                                    <tr>
+                                        <td colspan="2" class="sin-prestamos">No hay préstamos</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td class="label">TOTAL PRÉSTAMOS:</td>
+                                        <td class="valor" id="total-prestamos-lunes">$0</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -408,9 +456,9 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="total_efectivo">Total efectivo (con préstamos incluidos):</label>
+                    <label for="total_efectivo">Total efectivo:</label>
                     <input type="number" id="total_efectivo" step="0.01" min="0" required placeholder="Ej: 6885200">
-                    <small class="form-hint">Efectivo total incluyendo los préstamos del día</small>
+                    <small class="form-hint">Efectivo total del día</small>
                 </div>
                 
                 <h4 class="form-section-title">Conceptos Básicos</h4>
@@ -418,12 +466,10 @@
                     <div class="form-group">
                         <label for="base">BASE:</label>
                         <input type="number" id="base" step="0.01" min="0" required placeholder="Ej: 220000">
-                        <small class="form-hint">Base inicial de la caja</small>
                     </div>
                     <div class="form-group">
                         <label for="ventas">VENTAS:</label>
                         <input type="number" id="ventas" step="0.01" min="0" required placeholder="Ej: 197000">
-                        <small class="form-hint">Ventas del día</small>
                     </div>
                 </div>
                 
@@ -431,90 +477,54 @@
                     <div class="form-group">
                         <label for="talonarios">TALONARIOS:</label>
                         <input type="number" id="talonarios" step="0.01" min="0" required placeholder="Ej: 7123500">
-                        <small class="form-hint">Ventas con talonarios</small>
                     </div>
                     <div class="form-group">
                         <label for="llevar">LLEVAR (Opcional):</label>
                         <input type="number" id="llevar" step="0.01" min="0" value="0" placeholder="Ej: 571000">
-                        <small class="form-hint">Dinero que se lleva del local</small>
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="otro">OTRO (Opcional):</label>
                     <input type="number" id="otro" step="0.01" min="0" value="0" placeholder="Ej: 0">
-                    <small class="form-hint">Otros ingresos/egresos</small>
                 </div>
                 
                 <h4 class="form-section-title">Préstamos Realizados</h4>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="prestamo_base">Préstamo BASE:</label>
-                        <input type="number" id="prestamo_base" step="0.01" min="0" value="0" placeholder="Ej: 101400">
-                    </div>
-                    <div class="form-group">
-                        <label for="obs_base">Observación:</label>
-                        <input type="text" id="obs_base" placeholder="Ej: Salsamentaria">
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="prestamo_llevar">Préstamo LLEVAR:</label>
-                        <input type="number" id="prestamo_llevar" step="0.01" min="0" value="0" placeholder="Ej: 571000">
-                    </div>
-                    <div class="form-group">
-                        <label for="obs_llevar">Observación:</label>
-                        <input type="text" id="obs_llevar" placeholder="Ej: Pagos">
+                <div id="prestamos-container">
+                    <!-- Los préstamos se agregarán dinámicamente aquí -->
+                    <div class="prestamo-item">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Concepto del préstamo:</label>
+                                <input type="text" class="prestamo-concepto" placeholder="Ej: Salsamentaria">
+                            </div>
+                            <div class="form-group">
+                                <label>Monto del préstamo:</label>
+                                <input type="number" class="prestamo-monto" step="0.01" min="0" placeholder="Ej: 101400">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="prestamo_ventas">Préstamo VENTAS:</label>
-                        <input type="number" id="prestamo_ventas" step="0.01" min="0" value="0" placeholder="Ej: 197000">
-                    </div>
-                    <div class="form-group">
-                        <label for="obs_ventas">Observación:</label>
-                        <input type="text" id="obs_ventas" placeholder="Ej: Churrasco y menudo">
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="prestamo_talonarios">Préstamo TALONARIOS:</label>
-                        <input type="number" id="prestamo_talonarios" step="0.01" min="0" value="0" placeholder="Ej: 0">
-                    </div>
-                    <div class="form-group">
-                        <label for="obs_talonarios">Observación:</label>
-                        <input type="text" id="obs_talonarios" placeholder="Ej: ">
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="prestamo_otro">Préstamo OTRO:</label>
-                        <input type="number" id="prestamo_otro" step="0.01" min="0" value="0" placeholder="Ej: 0">
-                    </div>
-                    <div class="form-group">
-                        <label for="obs_otro">Observación:</label>
-                        <input type="text" id="obs_otro" placeholder="Ej: ">
-                    </div>
+                <div class="form-group">
+                    <button type="button" class="btn-actualizar btn-secondary" onclick="agregarPrestamo()">
+                        <i class="fas fa-plus"></i> Agregar otro préstamo
+                    </button>
                 </div>
                 
                 <div class="form-group" id="diferencia-container">
-                    <label>Resumen:</label>
+                    <label>Resumen Calculado:</label>
                     <div class="resumen-calculado">
-                        <div class="resumen-item">
-                            <span>Total Préstamos:</span>
-                            <span id="total-prestamos-calculado">$0</span>
-                        </div>
                         <div class="resumen-item">
                             <span>Total Conceptos:</span>
                             <span id="total-conceptos-calculado">$0</span>
                         </div>
+                        <div class="resumen-item">
+                            <span>Total Préstamos:</span>
+                            <span id="total-prestamos-calculado">$0</span>
+                        </div>
                         <div class="resumen-item diferencia">
-                            <span>DIFERENCIA CALCULADA:</span>
+                            <span>TOTAL DIFERENCIA:</span>
                             <span id="diferencia-calculada">$0</span>
                         </div>
                     </div>

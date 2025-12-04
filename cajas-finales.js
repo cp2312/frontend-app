@@ -228,17 +228,6 @@ function obtenerCierre(dia, numeroCaja = 1) {
     );
 }
 
-// Calcular total de préstamos para un cierre
-function calcularTotalPrestamos(cierre) {
-    if (!cierre) return 0;
-    
-    return (parseFloat(cierre.prestamo_base || 0) +
-           parseFloat(cierre.prestamo_llevar || 0) +
-           parseFloat(cierre.prestamo_ventas || 0) +
-           parseFloat(cierre.prestamo_talonarios || 0) +
-           parseFloat(cierre.prestamo_otro || 0));
-}
-
 // Calcular total de conceptos (sin préstamos)
 function calcularTotalConceptos(cierre) {
     if (!cierre) return 0;
@@ -256,7 +245,7 @@ function calcularDiferencia(cierre) {
     
     const totalEfectivo = parseFloat(cierre.total_efectivo || 0);
     const totalConceptos = calcularTotalConceptos(cierre);
-    const totalPrestamos = calcularTotalPrestamos(cierre);
+    const totalPrestamos = parseFloat(cierre.prestamos_total || 0);
     
     // Fórmula: (Total Efectivo + Total Préstamos) - Total Conceptos
     return (totalEfectivo + totalPrestamos) - totalConceptos;
@@ -269,63 +258,64 @@ function actualizarCierreUI(dia, numeroCaja = 1) {
     
     if (cierre) {
         // Calcular totales
-        const totalPrestamos = calcularTotalPrestamos(cierre);
         const totalConceptos = calcularTotalConceptos(cierre);
         const diferencia = calcularDiferencia(cierre);
-        
-        // Actualizar préstamos totales
-        document.getElementById(`prestamos${idSuffix}`).textContent = formatMoney(totalPrestamos);
+        const totalPrestamos = parseFloat(cierre.prestamos_total || 0);
         
         // Actualizar valores principales
+        document.getElementById(`total-efectivo${idSuffix}`).textContent = formatMoney(cierre.total_efectivo);
         document.getElementById(`base${idSuffix}`).textContent = formatMoney(cierre.base);
         document.getElementById(`llevar${idSuffix}`).textContent = formatMoney(cierre.llevar || 0);
         document.getElementById(`ventas${idSuffix}`).textContent = formatMoney(cierre.ventas);
         document.getElementById(`talonarios${idSuffix}`).textContent = formatMoney(cierre.talonarios);
         document.getElementById(`otro${idSuffix}`).textContent = formatMoney(cierre.otro || 0);
         
-        // Actualizar observaciones
-        document.getElementById(`base-obs${idSuffix}`).textContent = cierre.obs_base || '';
-        document.getElementById(`llevar-obs${idSuffix}`).textContent = cierre.obs_llevar || '';
-        document.getElementById(`ventas-obs${idSuffix}`).textContent = cierre.obs_ventas || '';
-        document.getElementById(`talonarios-obs${idSuffix}`).textContent = cierre.obs_talonarios || '';
-        document.getElementById(`otro-obs${idSuffix}`).textContent = cierre.obs_otro || '';
-        
-        // Actualizar préstamos individuales
-        document.getElementById(`base-prestamo${idSuffix}`).textContent = formatMoney(cierre.prestamo_base || 0);
-        document.getElementById(`llevar-prestamo${idSuffix}`).textContent = formatMoney(cierre.prestamo_llevar || 0);
-        document.getElementById(`ventas-prestamo${idSuffix}`).textContent = formatMoney(cierre.prestamo_ventas || 0);
-        document.getElementById(`talonarios-prestamo${idSuffix}`).textContent = formatMoney(cierre.prestamo_talonarios || 0);
-        document.getElementById(`otro-prestamo${idSuffix}`).textContent = formatMoney(cierre.prestamo_otro || 0);
-        
         // Actualizar totales
         document.getElementById(`total${idSuffix}-detalle`).textContent = formatMoney(totalConceptos);
-        document.getElementById(`total-prestamos${idSuffix}`).textContent = formatMoney(totalPrestamos);
         document.getElementById(`diferencia${idSuffix}`).textContent = formatMoney(diferencia);
+        
+        // Actualizar préstamos
+        document.getElementById(`total-prestamos${idSuffix}`).textContent = formatMoney(totalPrestamos);
+        
+        // Actualizar lista de préstamos
+        const prestamosBody = document.getElementById(`prestamos-body${idSuffix}`);
+        if (cierre.prestamos && cierre.prestamos.length > 0) {
+            let html = '';
+            cierre.prestamos.forEach((prestamo, index) => {
+                html += `
+                    <tr>
+                        <td>${prestamo.concepto || `Préstamo ${index + 1}`}</td>
+                        <td class="valor">${formatMoney(prestamo.monto || 0)}</td>
+                    </tr>
+                `;
+            });
+            prestamosBody.innerHTML = html;
+        } else {
+            prestamosBody.innerHTML = `
+                <tr>
+                    <td colspan="2" class="sin-prestamos">No hay préstamos</td>
+                </tr>
+            `;
+        }
     } else {
         // Si no hay cierre, mostrar ceros
-        document.getElementById(`prestamos${idSuffix}`).textContent = formatMoney(0);
-        
+        document.getElementById(`total-efectivo${idSuffix}`).textContent = formatMoney(0);
         document.getElementById(`base${idSuffix}`).textContent = formatMoney(0);
         document.getElementById(`llevar${idSuffix}`).textContent = formatMoney(0);
         document.getElementById(`ventas${idSuffix}`).textContent = formatMoney(0);
         document.getElementById(`talonarios${idSuffix}`).textContent = formatMoney(0);
         document.getElementById(`otro${idSuffix}`).textContent = formatMoney(0);
         
-        document.getElementById(`base-obs${idSuffix}`).textContent = '';
-        document.getElementById(`llevar-obs${idSuffix}`).textContent = '';
-        document.getElementById(`ventas-obs${idSuffix}`).textContent = '';
-        document.getElementById(`talonarios-obs${idSuffix}`).textContent = '';
-        document.getElementById(`otro-obs${idSuffix}`).textContent = '';
-        
-        document.getElementById(`base-prestamo${idSuffix}`).textContent = formatMoney(0);
-        document.getElementById(`llevar-prestamo${idSuffix}`).textContent = formatMoney(0);
-        document.getElementById(`ventas-prestamo${idSuffix}`).textContent = formatMoney(0);
-        document.getElementById(`talonarios-prestamo${idSuffix}`).textContent = formatMoney(0);
-        document.getElementById(`otro-prestamo${idSuffix}`).textContent = formatMoney(0);
-        
         document.getElementById(`total${idSuffix}-detalle`).textContent = formatMoney(0);
-        document.getElementById(`total-prestamos${idSuffix}`).textContent = formatMoney(0);
         document.getElementById(`diferencia${idSuffix}`).textContent = formatMoney(0);
+        document.getElementById(`total-prestamos${idSuffix}`).textContent = formatMoney(0);
+        
+        const prestamosBody = document.getElementById(`prestamos-body${idSuffix}`);
+        prestamosBody.innerHTML = `
+            <tr>
+                <td colspan="2" class="sin-prestamos">No hay préstamos</td>
+            </tr>
+        `;
     }
 }
 
@@ -438,6 +428,10 @@ function abrirModalCierre(dia, numeroCaja = 1) {
         numeroCajaContainer.style.display = 'block';
     }
     
+    // Limpiar préstamos previos
+    const prestamosContainer = document.getElementById('prestamos-container');
+    prestamosContainer.innerHTML = '';
+    
     // Si es edición, cargar datos
     if (cierre) {
         document.getElementById('total_efectivo').value = cierre.total_efectivo || '';
@@ -447,21 +441,15 @@ function abrirModalCierre(dia, numeroCaja = 1) {
         document.getElementById('llevar').value = cierre.llevar || 0;
         document.getElementById('otro').value = cierre.otro || 0;
         
-        // Préstamos y observaciones
-        document.getElementById('prestamo_base').value = cierre.prestamo_base || 0;
-        document.getElementById('obs_base').value = cierre.obs_base || '';
-        
-        document.getElementById('prestamo_llevar').value = cierre.prestamo_llevar || 0;
-        document.getElementById('obs_llevar').value = cierre.obs_llevar || '';
-        
-        document.getElementById('prestamo_ventas').value = cierre.prestamo_ventas || 0;
-        document.getElementById('obs_ventas').value = cierre.obs_ventas || '';
-        
-        document.getElementById('prestamo_talonarios').value = cierre.prestamo_talonarios || 0;
-        document.getElementById('obs_talonarios').value = cierre.obs_talonarios || '';
-        
-        document.getElementById('prestamo_otro').value = cierre.prestamo_otro || 0;
-        document.getElementById('obs_otro').value = cierre.obs_otro || '';
+        // Cargar préstamos
+        if (cierre.prestamos && cierre.prestamos.length > 0) {
+            cierre.prestamos.forEach((prestamo, index) => {
+                agregarPrestamo(prestamo.concepto, prestamo.monto);
+            });
+        } else {
+            // Agregar un préstamo vacío por defecto
+            agregarPrestamo();
+        }
     } else {
         // Nuevo cierre - resetear formulario
         document.getElementById('total_efectivo').value = '';
@@ -471,20 +459,8 @@ function abrirModalCierre(dia, numeroCaja = 1) {
         document.getElementById('llevar').value = 0;
         document.getElementById('otro').value = 0;
         
-        document.getElementById('prestamo_base').value = 0;
-        document.getElementById('obs_base').value = '';
-        
-        document.getElementById('prestamo_llevar').value = 0;
-        document.getElementById('obs_llevar').value = '';
-        
-        document.getElementById('prestamo_ventas').value = 0;
-        document.getElementById('obs_ventas').value = '';
-        
-        document.getElementById('prestamo_talonarios').value = 0;
-        document.getElementById('obs_talonarios').value = '';
-        
-        document.getElementById('prestamo_otro').value = 0;
-        document.getElementById('obs_otro').value = '';
+        // Agregar un préstamo vacío por defecto
+        agregarPrestamo();
     }
     
     // Calcular y mostrar resumen
@@ -507,6 +483,46 @@ function cerrarModalCierre() {
     formCierre.reset();
 }
 
+// Agregar campo de préstamo
+function agregarPrestamo(concepto = '', monto = '') {
+    const prestamosContainer = document.getElementById('prestamos-container');
+    const prestamoId = Date.now();
+    
+    const prestamoHTML = `
+        <div class="prestamo-item" id="prestamo-${prestamoId}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Concepto del préstamo:</label>
+                    <input type="text" class="prestamo-concepto" placeholder="Ej: Salsamentaria" value="${concepto}">
+                </div>
+                <div class="form-group">
+                    <label>Monto del préstamo:</label>
+                    <input type="number" class="prestamo-monto" step="0.01" min="0" placeholder="Ej: 101400" value="${monto}">
+                </div>
+            </div>
+            <button type="button" class="btn-eliminar-prestamo" onclick="eliminarPrestamo(${prestamoId})">
+                <i class="fas fa-trash"></i> Eliminar préstamo
+            </button>
+        </div>
+    `;
+    
+    prestamosContainer.insertAdjacentHTML('beforeend', prestamoHTML);
+    
+    // Agregar event listeners para cálculo en tiempo real
+    const nuevoPrestamo = document.getElementById(`prestamo-${prestamoId}`);
+    nuevoPrestamo.querySelector('.prestamo-concepto').addEventListener('input', calcularYMostrarResumen);
+    nuevoPrestamo.querySelector('.prestamo-monto').addEventListener('input', calcularYMostrarResumen);
+}
+
+// Eliminar campo de préstamo
+function eliminarPrestamo(id) {
+    const prestamoElement = document.getElementById(`prestamo-${id}`);
+    if (prestamoElement) {
+        prestamoElement.remove();
+        calcularYMostrarResumen();
+    }
+}
+
 // Calcular y mostrar resumen en tiempo real
 function calcularYMostrarResumen() {
     // Obtener valores de conceptos
@@ -516,19 +532,18 @@ function calcularYMostrarResumen() {
     const talonarios = parseFloat(document.getElementById('talonarios').value) || 0;
     const otro = parseFloat(document.getElementById('otro').value) || 0;
     
-    // Obtener valores de préstamos
-    const prestamoBase = parseFloat(document.getElementById('prestamo_base').value) || 0;
-    const prestamoLlevar = parseFloat(document.getElementById('prestamo_llevar').value) || 0;
-    const prestamoVentas = parseFloat(document.getElementById('prestamo_ventas').value) || 0;
-    const prestamoTalonarios = parseFloat(document.getElementById('prestamo_talonarios').value) || 0;
-    const prestamoOtro = parseFloat(document.getElementById('prestamo_otro').value) || 0;
-    
     // Obtener total efectivo
     const totalEfectivo = parseFloat(document.getElementById('total_efectivo').value) || 0;
     
+    // Calcular total de préstamos
+    let totalPrestamos = 0;
+    const prestamoMontos = document.querySelectorAll('.prestamo-monto');
+    prestamoMontos.forEach(input => {
+        totalPrestamos += parseFloat(input.value) || 0;
+    });
+    
     // Calcular totales
     const totalConceptos = base + llevar + ventas + talonarios + otro;
-    const totalPrestamos = prestamoBase + prestamoLlevar + prestamoVentas + prestamoTalonarios + prestamoOtro;
     const diferencia = (totalEfectivo + totalPrestamos) - totalConceptos;
     
     // Actualizar display
@@ -581,26 +596,27 @@ async function guardarCierre(e) {
     const otro = parseFloat(document.getElementById('otro').value) || 0;
     const semana_id = semanaActual.id;
     
-    // Préstamos y observaciones
-    const prestamo_base = parseFloat(document.getElementById('prestamo_base').value) || 0;
-    const obs_base = document.getElementById('obs_base').value.trim();
+    // Obtener préstamos
+    const prestamos = [];
+    const prestamoItems = document.querySelectorAll('.prestamo-item');
+    prestamoItems.forEach(item => {
+        const concepto = item.querySelector('.prestamo-concepto').value.trim();
+        const monto = parseFloat(item.querySelector('.prestamo-monto').value) || 0;
+        
+        if (concepto && monto > 0) {
+            prestamos.push({
+                concepto,
+                monto
+            });
+        }
+    });
     
-    const prestamo_llevar = parseFloat(document.getElementById('prestamo_llevar').value) || 0;
-    const obs_llevar = document.getElementById('obs_llevar').value.trim();
-    
-    const prestamo_ventas = parseFloat(document.getElementById('prestamo_ventas').value) || 0;
-    const obs_ventas = document.getElementById('obs_ventas').value.trim();
-    
-    const prestamo_talonarios = parseFloat(document.getElementById('prestamo_talonarios').value) || 0;
-    const obs_talonarios = document.getElementById('obs_talonarios').value.trim();
-    
-    const prestamo_otro = parseFloat(document.getElementById('prestamo_otro').value) || 0;
-    const obs_otro = document.getElementById('obs_otro').value.trim();
+    // Calcular total de préstamos
+    const prestamos_total = prestamos.reduce((total, prestamo) => total + (prestamo.monto || 0), 0);
     
     // Calcular diferencia
-    const totalPrestamos = prestamo_base + prestamo_llevar + prestamo_ventas + prestamo_talonarios + prestamo_otro;
     const totalConceptos = base + llevar + ventas + talonarios + otro;
-    const diferencia = (total_efectivo + totalPrestamos) - totalConceptos;
+    const diferencia = (total_efectivo + prestamos_total) - totalConceptos;
     
     // Validaciones
     if (!total_efectivo || total_efectivo < 0) {
@@ -634,17 +650,8 @@ async function guardarCierre(e) {
         otro,
         diferencia,
         semana_id,
-        // Nuevos campos para préstamos
-        prestamo_base,
-        obs_base,
-        prestamo_llevar,
-        obs_llevar,
-        prestamo_ventas,
-        obs_ventas,
-        prestamo_talonarios,
-        obs_talonarios,
-        prestamo_otro,
-        obs_otro
+        prestamos: prestamos.length > 0 ? prestamos : [],
+        prestamos_total
     };
     
     try {
@@ -742,8 +749,7 @@ function inicializar() {
     
     // Event listeners para calcular en tiempo real
     const camposCalculo = [
-        'total_efectivo', 'base', 'llevar', 'ventas', 'talonarios', 'otro',
-        'prestamo_base', 'prestamo_llevar', 'prestamo_ventas', 'prestamo_talonarios', 'prestamo_otro'
+        'total_efectivo', 'base', 'llevar', 'ventas', 'talonarios', 'otro'
     ];
     
     camposCalculo.forEach(campo => {
