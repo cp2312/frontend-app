@@ -3,197 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gastos Generales - Administración</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <title>Gastos Generales</title>
     <link rel="stylesheet" href="otros-gastos.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-custom shadow">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="bi bi-cash-stack me-2"></i>
-                <span class="fw-bold">Control de Gastos</span>
-            </a>
-            <div class="d-flex align-items-center">
-                <div class="me-3">
-                    <select id="selectSemana" class="form-select form-select-sm">
-                        <option value="">Seleccionar Semana</option>
-                    </select>
-                </div>
-                <div class="navbar-text">
-                    <span id="infoSemana" class="badge bg-info">Sin semana seleccionada</span>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Container -->
-    <div class="container-fluid mt-4">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-lg-3 col-md-4 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Nuevo Gasto</h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="formGasto">
-                            <input type="hidden" id="gastoId">
-                            
-                            <div class="mb-3">
-                                <label for="fecha" class="form-label">Fecha</label>
-                                <input type="date" class="form-control" id="fecha" required>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="concepto" class="form-label">Concepto</label>
-                                <input type="text" class="form-control" id="concepto" 
-                                       placeholder="Ej: Material de oficina, Combustible, etc." required>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="monto" class="form-label">Monto ($)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" id="monto" 
-                                           min="0" step="0.01" placeholder="0.00" required>
-                                </div>
-                            </div>
-                            
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-success">
-                                    <i class="bi bi-check-circle me-2"></i>Guardar Gasto
-                                </button>
-                                <button type="button" id="btnCancelar" class="btn btn-secondary" style="display: none;">
-                                    <i class="bi bi-x-circle me-2"></i>Cancelar Edición
-                                </button>
-                            </div>
-                        </form>
-                        
-                        <!-- Resumen Semanal -->
-                        <div class="mt-4 pt-3 border-top">
-                            <h6 class="text-muted mb-3"><i class="bi bi-graph-up me-2"></i>Resumen Semanal</h6>
-                            <div class="row text-center">
-                                <div class="col-12 mb-2">
-                                    <div class="card bg-light">
-                                        <div class="card-body py-2">
-                                            <small class="text-muted d-block">Total Gastos</small>
-                                            <h4 id="totalGastos" class="mb-0 text-danger">$0.00</h4>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="card bg-light">
-                                        <div class="card-body py-2">
-                                            <small class="text-muted d-block">Cantidad de Gastos</small>
-                                            <h4 id="cantidadGastos" class="mb-0 text-primary">0</h4>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-receipt"></i> Gastos Generales</h1>
+                <div class="semana-info">
+                    <div class="semana-card">
+                        <h3 id="nombreSemanaInfo">Semana 1</h3>
+                        <p id="fechaSemanaInfo">Fecha</p>
+                        <p id="mesSemanaInfo">Mes</p>
                     </div>
                 </div>
             </div>
+            <button class="btn-volver" onclick="volverAlDashboard()">
+                <i class="fas fa-arrow-left"></i> Volver al Dashboard
+            </button>
+        </header>
 
-            <!-- Main Content -->
-            <div class="col-lg-9 col-md-8">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Lista de Gastos</h5>
-                        <div>
-                            <button id="btnExportar" class="btn btn-sm btn-outline-secondary me-2">
-                                <i class="bi bi-download me-1"></i>Exportar
-                            </button>
-                            <button id="btnActualizar" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-arrow-clockwise"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-striped" id="tablaGastos">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th width="100">Fecha</th>
-                                        <th>Concepto</th>
-                                        <th width="150">Monto</th>
-                                        <th width="120">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Los gastos se cargarán aquí dinámicamente -->
-                                    <tr id="sinGastos">
-                                        <td colspan="4" class="text-center text-muted py-5">
-                                            <i class="bi bi-receipt display-4 d-block mb-3"></i>
-                                            <h5>No hay gastos registrados</h5>
-                                            <p class="mb-0">Selecciona una semana y agrega tu primer gasto</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <!-- Paginación -->
-                        <nav aria-label="Page navigation" class="mt-3">
-                            <ul class="pagination justify-content-center" id="paginacion">
-                                <!-- La paginación se generará dinámicamente -->
-                            </ul>
-                        </nav>
+        <!-- Formulario de gasto -->
+        <div class="card form-card">
+            <h2><i class="fas fa-plus-circle"></i> Nuevo Gasto</h2>
+            <form id="formGasto">
+                <div class="form-group">
+                    <label for="fecha"><i class="fas fa-calendar"></i> Fecha</label>
+                    <input type="date" id="fecha" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="concepto"><i class="fas fa-file-invoice-dollar"></i> Concepto</label>
+                    <input type="text" id="concepto" placeholder="Ej: Material de oficina" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="monto"><i class="fas fa-dollar-sign"></i> Monto</label>
+                    <div class="input-with-icon">
+                        <span class="currency">$</span>
+                        <input type="number" id="monto" step="0.01" min="0" placeholder="0.00" required>
                     </div>
                 </div>
                 
-                <!-- Estadísticas -->
-                <div class="row mt-4">
-                    <div class="col-md-6">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-header bg-white">
-                                <h6 class="mb-0"><i class="bi bi-calendar-week me-2"></i>Gastos por Día</h6>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="chartGastosPorDia"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-header bg-white">
-                                <h6 class="mb-0"><i class="bi bi-tags me-2"></i>Top Conceptos</h6>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="chartTopConceptos"></canvas>
-                            </div>
-                        </div>
-                    </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Guardar Gasto
+                    </button>
+                    <button type="button" class="btn-secondary" id="btnCancelar" style="display: none;">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Resumen -->
+            <div class="resumen">
+                <div class="resumen-item">
+                    <h4>Total Gastos</h4>
+                    <p class="total-monto" id="totalGastos">$0.00</p>
+                </div>
+                <div class="resumen-item">
+                    <h4>Cantidad</h4>
+                    <p class="total-cantidad" id="cantidadGastos">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de gastos -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-list"></i> Lista de Gastos</h2>
+                <div class="actions">
+                    <button class="btn-refresh" onclick="cargarGastos()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table id="tablaGastos">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Concepto</th>
+                            <th>Monto</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Los gastos se cargarán aquí -->
+                    </tbody>
+                </table>
+                <div class="empty-state" id="sinGastos">
+                    <i class="fas fa-receipt"></i>
+                    <h3>No hay gastos registrados</h3>
+                    <p>Agrega tu primer gasto usando el formulario</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Confirmación -->
-    <div class="modal fade" id="confirmModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Confirmar</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p id="modalMessage">¿Estás seguro de que deseas eliminar este gasto?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
-                </div>
+    <!-- Modal de confirmación -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="modalMessage">¿Estás seguro de que deseas eliminar este gasto?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="btnCancelModal">Cancelar</button>
+                <button class="btn-danger" id="btnConfirmDelete">Eliminar</button>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="otros-gastos.js"></script>
 </body>
 </html>
