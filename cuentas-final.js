@@ -49,11 +49,13 @@ function formatFecha(fechaString) {
     }).replace(/^\w/, c => c.toUpperCase());
 }
 
-// Formatear moneda
+// Formatear moneda en pesos colombianos
 function formatMoneda(valor) {
-    return new Intl.NumberFormat('es-ES', {
+    return new Intl.NumberFormat('es-CO', {
         style: 'currency',
-        currency: 'USD'
+        currency: 'COP',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
     }).format(valor);
 }
 
@@ -73,27 +75,74 @@ async function cargarDatos() {
             fetch(`${API_URL}/api/prestamos/semana/${semanaActual.id}`).then(r => r.json())
         ]);
         
-        // Calcular totales
-        const totalProductos = productos.reduce((sum, p) => sum + parseFloat(p.total_final || 0), 0);
+        // Separar productos estáticos y gastos en productos
+        const PRODUCTOS_ESTATICOS = ['Costilla', 'Asadura', 'Creadillas', 'Patas', 'Cabezas', 'Menudos', 'Manteca', 'Sangre', 'Guia'];
+        
+        const productosReales = productos.filter(p => 
+            PRODUCTOS_ESTATICOS.some(pe => pe.toLowerCase() === p.nombre.toLowerCase()) && p.libras > 0
+        );
+        
+        const gastosEnProductos = productos.filter(p => 
+            !PRODUCTOS_ESTATICOS.some(pe => pe.toLowerCase() === p.nombre.toLowerCase()) || p.libras === 0
+        );
+        
+        // Calcular total de productos (suma de total, no total_final)
+        const totalProductosIndividual = productosReales.reduce((sum, p) => {
+            const total = parseFloat(p.precio_unitario || 0) * parseFloat(p.libras || 0);
+            return sum + total;
+        }, 0);
+        
+        // Calcular total de gastos en productos (precio_unitario cuando libras = 0)
+        const totalGastosEnProductos = gastosEnProductos.reduce((sum, p) => {
+            return sum + parseFloat(p.precio_unitario || 0);
+        }, 0);
+        
+        // Total Final de Productos = Total Productos - Gastos en Productos
+        const totalFinalProductos = totalProductosIndividual - totalGastosEnProductos;
+        
+        // Calcular efectivo total de cierres
         const totalEfectivo = cierres.reduce((sum, c) => sum + parseFloat(c.total_efectivo || 0), 0);
+        
+        // Calcular otros gastos
         const totalOtrosGastos = otrosGastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
         
-        // Total de préstamos (TODOS: Prestamo + Gasto)
-        const totalPrestamos = prestamos.reduce((sum, p) => sum + parseFloat(p.monto || 0), 0);
+        // Calcular préstamos y gastos personales
+        const totalPrestamosPersonales = prestamos
+            .filter(p => p.tipo === 'Prestamo')
+            .reduce((sum, p) => sum + parseFloat(p.monto || 0), 0);
+        
+        const totalGastosPersonales = prestamos
+            .filter(p => p.tipo === 'Gasto')
+            .reduce((sum, p) => sum + parseFloat(p.monto || 0), 0);
+        
+        // Total Final de Préstamos = Préstamos - Gastos
+        const totalFinalPrestamos = totalPrestamosPersonales - totalGastosPersonales;
+        
+        // Si el total final de préstamos es negativo, se suma al efectivo
+        let efectivoAjustado = totalEfectivo;
+        if (totalFinalPrestamos < 0) {
+            efectivoAjustado += Math.abs(totalFinalPrestamos);
+        }
         
         // Actualizar tarjetas de estadísticas
-        document.getElementById('totalProductos').textContent = formatMoneda(totalProductos);
-        document.getElementById('totalEfectivo').textContent = formatMoneda(totalEfectivo);
+        document.getElementById('totalProductos').textContent = formatMoneda(totalFinalProductos);
+        document.getElementById('totalEfectivo').textContent = formatMoneda(efectivoAjustado);
         document.getElementById('totalOtrosGastos').textContent = formatMoneda(totalOtrosGastos);
-        document.getElementById('totalPrestamos').textContent = formatMoneda(totalPrestamos);
+        document.getElementById('totalPrestamos').textContent = formatMoneda(totalFinalPrestamos);
         
         // Calcular balance final
-        const balanceFinal = totalEfectivo - totalProductos - totalOtrosGastos - totalPrestamos;
+        let balanceFinal = efectivoAjustado - totalFinalProductos - totalOtrosGastos;
+        
+        // Si préstamos es positivo, también se resta del balance
+        if (totalFinalPrestamos > 0) {
+            balanceFinal -= totalFinalPrestamos;
+        }
+        
         const balanceElement = document.getElementById('balanceFinal');
         balanceElement.textContent = formatMoneda(balanceFinal);
         
         // Mostrar tabla de desglose
-        mostrarTablaDesglose(totalEfectivo, totalProductos, totalOtrosGastos, totalPrestamos);
+        mostrarTablaDesglose(efectivoAjustado, totalFinalProductos, totalOtrosGastos, totalFinalPrestamos);
         
         // Mostrar tabla por persona (préstamos)
         mostrarTablaPorPersona(prestamos);
@@ -105,27 +154,27 @@ async function cargarDatos() {
 }
 
 // Mostrar tabla de desglose con resta acumulada
-function mostrarTablaDesglose(efectivo, productos, otrosGastos, prestamos) {
+function mostrarTablaDesglose(efectivo, totalFinalProductos, otrosGastos, totalFinalPrestamos) {
     const tbody = document.querySelector('#tablaDesglose tbody');
     tbody.innerHTML = '';
     
     let saldoAcumulado = efectivo;
     
-    // Fila 1: Efectivo inicial (entrada)
+    // Fila 1: Efectivo inicial (entrada) - puede estar ajustado si préstamos es negativo
     const row1 = document.createElement('tr');
     row1.innerHTML = `
-        <td><strong>💰 Efectivo Total (Cierres de Caja)</strong></td>
+        <td><strong>💰 Efectivo Total (Cierres de Caja)${totalFinalPrestamos < 0 ? ' + Ajuste por Préstamos' : ''}</strong></td>
         <td class="monto-positivo">${formatMoneda(efectivo)}</td>
         <td><span class="saldo-positivo">${formatMoneda(saldoAcumulado)}</span></td>
     `;
     tbody.appendChild(row1);
     
-    // Fila 2: Restar productos
-    saldoAcumulado -= productos;
+    // Fila 2: Restar total final de productos
+    saldoAcumulado -= totalFinalProductos;
     const row2 = document.createElement('tr');
     row2.innerHTML = `
-        <td>📦 Total Productos (gasto)</td>
-        <td class="monto-negativo">-${formatMoneda(productos)}</td>
+        <td>📦 Total Final Productos (Productos - Gastos)</td>
+        <td class="monto-negativo">-${formatMoneda(totalFinalProductos)}</td>
         <td><span class="${saldoAcumulado >= 0 ? 'saldo-positivo' : 'saldo-negativo'}">${formatMoneda(saldoAcumulado)}</span></td>
     `;
     tbody.appendChild(row2);
@@ -140,15 +189,26 @@ function mostrarTablaDesglose(efectivo, productos, otrosGastos, prestamos) {
     `;
     tbody.appendChild(row3);
     
-    // Fila 4: Restar préstamos/gastos personales
-    saldoAcumulado -= prestamos;
-    const row4 = document.createElement('tr');
-    row4.innerHTML = `
-        <td>👥 Préstamos/Gastos Personales</td>
-        <td class="monto-negativo">-${formatMoneda(prestamos)}</td>
-        <td><span class="${saldoAcumulado >= 0 ? 'saldo-positivo' : 'saldo-negativo'}">${formatMoneda(saldoAcumulado)}</span></td>
-    `;
-    tbody.appendChild(row4);
+    // Fila 4: Préstamos (solo si es positivo, si es negativo ya está en el efectivo)
+    if (totalFinalPrestamos > 0) {
+        saldoAcumulado -= totalFinalPrestamos;
+        const row4 = document.createElement('tr');
+        row4.innerHTML = `
+            <td>👥 Total Final Préstamos (Préstamos - Gastos)</td>
+            <td class="monto-negativo">-${formatMoneda(totalFinalPrestamos)}</td>
+            <td><span class="${saldoAcumulado >= 0 ? 'saldo-positivo' : 'saldo-negativo'}">${formatMoneda(saldoAcumulado)}</span></td>
+        `;
+        tbody.appendChild(row4);
+    } else if (totalFinalPrestamos < 0) {
+        // Mostrar info de que ya está incluido en el efectivo
+        const rowInfo = document.createElement('tr');
+        rowInfo.innerHTML = `
+            <td>👥 Préstamos Negativos (ya sumados al efectivo)</td>
+            <td class="monto-positivo">+${formatMoneda(Math.abs(totalFinalPrestamos))}</td>
+            <td><span class="${saldoAcumulado >= 0 ? 'saldo-positivo' : 'saldo-negativo'}">${formatMoneda(saldoAcumulado)}</span></td>
+        `;
+        tbody.appendChild(rowInfo);
+    }
     
     // Fila final: Balance
     const rowFinal = document.createElement('tr');
@@ -160,15 +220,12 @@ function mostrarTablaDesglose(efectivo, productos, otrosGastos, prestamos) {
     tbody.appendChild(rowFinal);
 }
 
-// Mostrar tabla por persona (préstamos/gastos)
+// Mostrar tabla por persona (préstamos - TODOS los tipos)
 function mostrarTablaPorPersona(prestamos) {
     const tbody = document.querySelector('#tablaPorPersona tbody');
     const sinPersonas = document.getElementById('sinPersonas');
     
-    // Filtrar solo los gastos
-    const gastos = prestamos.filter(p => p.tipo === 'Gasto');
-    
-    if (gastos.length === 0) {
+    if (prestamos.length === 0) {
         tbody.innerHTML = '';
         sinPersonas.style.display = 'block';
         return;
@@ -177,36 +234,55 @@ function mostrarTablaPorPersona(prestamos) {
     sinPersonas.style.display = 'none';
     tbody.innerHTML = '';
     
-    // Agrupar por persona
+    // Agrupar por persona y calcular total final (Préstamos - Gastos)
     const porPersona = {};
-    gastos.forEach(gasto => {
-        const persona = gasto.persona || 'Sin Asignar';
+    
+    prestamos.forEach(prestamo => {
+        const persona = prestamo.persona || 'Sin Asignar';
         if (!porPersona[persona]) {
-            porPersona[persona] = 0;
+            porPersona[persona] = {
+                prestamos: 0,
+                gastos: 0,
+                totalFinal: 0
+            };
         }
-        porPersona[persona] += parseFloat(gasto.monto || 0);
+        
+        const monto = parseFloat(prestamo.monto || 0);
+        if (prestamo.tipo === 'Prestamo') {
+            porPersona[persona].prestamos += monto;
+        } else if (prestamo.tipo === 'Gasto') {
+            porPersona[persona].gastos += monto;
+        }
+        
+        porPersona[persona].totalFinal = porPersona[persona].prestamos - porPersona[persona].gastos;
     });
     
-    // Ordenar por total descendente
+    // Ordenar por total final descendente
     const personasOrdenadas = Object.entries(porPersona)
-        .sort((a, b) => b[1] - a[1]);
+        .sort((a, b) => b[1].totalFinal - a[1].totalFinal);
     
     // Crear filas
-    personasOrdenadas.forEach(([persona, total]) => {
+    personasOrdenadas.forEach(([persona, datos]) => {
         const row = document.createElement('tr');
+        const claseColor = datos.totalFinal >= 0 ? 'saldo-positivo' : 'saldo-negativo';
+        const signo = datos.totalFinal >= 0 ? '' : '-';
+        
         row.innerHTML = `
             <td><strong>${persona}</strong></td>
-            <td><span class="saldo-negativo">-${formatMoneda(total)}</span></td>
+            <td><span class="${claseColor}">${signo}${formatMoneda(Math.abs(datos.totalFinal))}</span></td>
         `;
         tbody.appendChild(row);
     });
     
     // Fila de total
-    const totalGeneral = personasOrdenadas.reduce((sum, [_, total]) => sum + total, 0);
+    const totalGeneralFinal = personasOrdenadas.reduce((sum, [_, datos]) => sum + datos.totalFinal, 0);
     const rowTotal = document.createElement('tr');
+    const claseTotalColor = totalGeneralFinal >= 0 ? 'monto-positivo' : 'monto-negativo';
+    const signoTotal = totalGeneralFinal >= 0 ? '' : '-';
+    
     rowTotal.innerHTML = `
-        <td><strong>TOTAL GENERAL (GASTOS)</strong></td>
-        <td><strong class="monto-negativo">-${formatMoneda(totalGeneral)}</strong></td>
+        <td><strong>TOTAL FINAL (Préstamos - Gastos)</strong></td>
+        <td><strong class="${claseTotalColor}">${signoTotal}${formatMoneda(Math.abs(totalGeneralFinal))}</strong></td>
     `;
     tbody.appendChild(rowTotal);
 }
