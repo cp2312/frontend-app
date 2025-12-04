@@ -12,7 +12,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 <!-- Agregar el script del generador -->
-<script src="generar-pdf-completo.js"></script>
+
 </head>
 <body>
     <div class="container">
@@ -28,11 +28,11 @@
                     </div>
                 </div>
             </div>
-          <div style="display: flex; gap: 12px; position: relative; z-index: 1;">
-    <button class="btn-volver" onclick="volverAlDashboard()">
-        <i class="fas fa-arrow-left"></i> Volver al Dashboard
-    </button>
-    <button class="btn-generar-pdf" onclick="generarPDFCompleto(semanaActual.id, semanaActual)"
+            <button class="btn-volver" onclick="volverAlDashboard()">
+                <i class="fas fa-arrow-left"></i> Volver al Dashboard
+            </button>
+
+             <button class="btn-generar-pdf" onclick="generarPDFCompleto(semanaActual.id, semanaActual)"
             style="background: rgba(239, 68, 68, 0.9);
                    backdrop-filter: blur(10px);
                    color: white;
@@ -157,5 +157,6 @@
     </div>
 
     <script src="cuentas-final.js"></script>
+    <script src="generar-pdf-completo.js"></script>
 </body>
 </html>
