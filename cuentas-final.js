@@ -106,62 +106,53 @@ async function cargarDatos() {
         // Calcular otros gastos
         const totalOtrosGastos = otrosGastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
         
-        // Calcular préstamos y gastos personales
-        const totalPrestamosPersonales = prestamos
-            .filter(p => p.tipo === 'Prestamo')
-            .reduce((sum, p) => sum + parseFloat(p.monto || 0), 0);
-        
-        const totalGastosPersonales = prestamos
-            .filter(p => p.tipo === 'Gasto')
-            .reduce((sum, p) => sum + parseFloat(p.monto || 0), 0);
-        
-        // Total Final de Préstamos = Préstamos - Gastos
-        const totalFinalPrestamosBruto = totalPrestamosPersonales - totalGastosPersonales;
-        
-        // Calcular total final por persona para obtener solo los POSITIVOS
-        const porPersonaTemp = {};
+        // Calcular total final de préstamos por persona (solo positivos)
+        const porPersona = {};
         prestamos.forEach(prestamo => {
             const persona = prestamo.persona || 'Sin Asignar';
-            if (!porPersonaTemp[persona]) {
-                porPersonaTemp[persona] = { prestamos: 0, gastos: 0 };
+            if (!porPersona[persona]) {
+                porPersona[persona] = {
+                    prestamos: 0,
+                    gastos: 0,
+                    totalFinal: 0
+                };
             }
+            
             const monto = parseFloat(prestamo.monto || 0);
             if (prestamo.tipo === 'Prestamo') {
-                porPersonaTemp[persona].prestamos += monto;
+                porPersona[persona].prestamos += monto;
             } else if (prestamo.tipo === 'Gasto') {
-                porPersonaTemp[persona].gastos += monto;
+                porPersona[persona].gastos += monto;
             }
+            
+            porPersona[persona].totalFinal = porPersona[persona].prestamos - porPersona[persona].gastos;
         });
         
-        // Sumar SOLO los totales finales POSITIVOS (los que se restan del efectivo)
+        // Sumar SOLO los préstamos POSITIVOS (los que se restan del efectivo)
         let totalFinalPrestamosPositivos = 0;
-        Object.values(porPersonaTemp).forEach(datos => {
-            const totalFinal = datos.prestamos - datos.gastos;
-            if (totalFinal > 0) {
-                totalFinalPrestamosPositivos += totalFinal;
+        Object.values(porPersona).forEach(datos => {
+            if (datos.totalFinal > 0) {
+                totalFinalPrestamosPositivos += datos.totalFinal;
             }
         });
-        
-        // Efectivo original
-        const efectivoOriginal = totalEfectivo;
         
         // Actualizar tarjetas de estadísticas
         document.getElementById('totalProductos').textContent = formatMoneda(totalFinalProductos);
-        document.getElementById('totalEfectivo').textContent = formatMoneda(efectivoOriginal);
+        document.getElementById('totalEfectivo').textContent = formatMoneda(totalEfectivo);
         document.getElementById('totalOtrosGastos').textContent = formatMoneda(totalOtrosGastos);
         document.getElementById('totalPrestamos').textContent = formatMoneda(totalFinalPrestamosPositivos);
         
         // Calcular balance final
-        const balanceFinal = efectivoOriginal - totalFinalProductos - totalOtrosGastos - totalFinalPrestamosPositivos;
+        const balanceFinal = totalEfectivo - totalFinalProductos - totalOtrosGastos - totalFinalPrestamosPositivos;
         
         const balanceElement = document.getElementById('balanceFinal');
         balanceElement.textContent = formatMoneda(balanceFinal);
         
         // Mostrar tabla de desglose
-        mostrarTablaDesglose(efectivoAjustado, totalFinalProductos, totalOtrosGastos, totalFinalPrestamos);
+        mostrarTablaDesglose(totalEfectivo, totalFinalProductos, totalOtrosGastos, totalFinalPrestamosPositivos);
         
         // Mostrar tabla por persona (préstamos)
-        mostrarTablaPorPersona(prestamos);
+        mostrarTablaPorPersona(prestamos, porPersona);
         
     } catch (error) {
         console.error('Error cargando datos:', error);
@@ -226,7 +217,7 @@ function mostrarTablaDesglose(efectivo, totalFinalProductos, otrosGastos, totalF
 }
 
 // Mostrar tabla por persona (préstamos - TODOS los tipos)
-function mostrarTablaPorPersona(prestamos) {
+function mostrarTablaPorPersona(prestamos, porPersona) {
     const tbody = document.querySelector('#tablaPorPersona tbody');
     const sinPersonas = document.getElementById('sinPersonas');
     
@@ -238,29 +229,6 @@ function mostrarTablaPorPersona(prestamos) {
     
     sinPersonas.style.display = 'none';
     tbody.innerHTML = '';
-    
-    // Agrupar por persona y calcular total final (Préstamos - Gastos)
-    const porPersona = {};
-    
-    prestamos.forEach(prestamo => {
-        const persona = prestamo.persona || 'Sin Asignar';
-        if (!porPersona[persona]) {
-            porPersona[persona] = {
-                prestamos: 0,
-                gastos: 0,
-                totalFinal: 0
-            };
-        }
-        
-        const monto = parseFloat(prestamo.monto || 0);
-        if (prestamo.tipo === 'Prestamo') {
-            porPersona[persona].prestamos += monto;
-        } else if (prestamo.tipo === 'Gasto') {
-            porPersona[persona].gastos += monto;
-        }
-        
-        porPersona[persona].totalFinal = porPersona[persona].prestamos - porPersona[persona].gastos;
-    });
     
     // Ordenar por total final descendente
     const personasOrdenadas = Object.entries(porPersona)
