@@ -118,10 +118,13 @@ async function cargarDatos() {
         // Total Final de Préstamos = Préstamos - Gastos
         const totalFinalPrestamos = totalPrestamosPersonales - totalGastosPersonales;
         
-        // Si el total final de préstamos es negativo, se suma al efectivo
+        // Efectivo sin ajustes inicialmente
         let efectivoAjustado = totalEfectivo;
-        if (totalFinalPrestamos < 0) {
-            efectivoAjustado += Math.abs(totalFinalPrestamos);
+        
+        // Si el total final de préstamos es POSITIVO, se resta del efectivo
+        // Si es NEGATIVO, solo se muestra en la tabla (deuda pendiente)
+        if (totalFinalPrestamos > 0) {
+            efectivoAjustado -= totalFinalPrestamos;
         }
         
         // Actualizar tarjetas de estadísticas
@@ -132,11 +135,6 @@ async function cargarDatos() {
         
         // Calcular balance final
         let balanceFinal = efectivoAjustado - totalFinalProductos - totalOtrosGastos;
-        
-        // Si préstamos es positivo, también se resta del balance
-        if (totalFinalPrestamos > 0) {
-            balanceFinal -= totalFinalPrestamos;
-        }
         
         const balanceElement = document.getElementById('balanceFinal');
         balanceElement.textContent = formatMoneda(balanceFinal);
@@ -160,10 +158,10 @@ function mostrarTablaDesglose(efectivo, totalFinalProductos, otrosGastos, totalF
     
     let saldoAcumulado = efectivo;
     
-    // Fila 1: Efectivo inicial (entrada) - puede estar ajustado si préstamos es negativo
+    // Fila 1: Efectivo inicial (entrada)
     const row1 = document.createElement('tr');
     row1.innerHTML = `
-        <td><strong>💰 Efectivo Total (Cierres de Caja)${totalFinalPrestamos < 0 ? ' + Ajuste por Préstamos' : ''}</strong></td>
+        <td><strong>💰 Efectivo Total (Cierres de Caja)</strong></td>
         <td class="monto-positivo">${formatMoneda(efectivo)}</td>
         <td><span class="saldo-positivo">${formatMoneda(saldoAcumulado)}</span></td>
     `;
@@ -189,23 +187,24 @@ function mostrarTablaDesglose(efectivo, totalFinalProductos, otrosGastos, totalF
     `;
     tbody.appendChild(row3);
     
-    // Fila 4: Préstamos (solo si es positivo, si es negativo ya está en el efectivo)
+    // Fila 4: Préstamos
     if (totalFinalPrestamos > 0) {
-        saldoAcumulado -= totalFinalPrestamos;
+        // Si es positivo, se resta del efectivo
         const row4 = document.createElement('tr');
         row4.innerHTML = `
-            <td>👥 Total Final Préstamos (Préstamos - Gastos)</td>
+            <td>👥 Total Final Préstamos (Préstamos - Gastos) ✅</td>
             <td class="monto-negativo">-${formatMoneda(totalFinalPrestamos)}</td>
             <td><span class="${saldoAcumulado >= 0 ? 'saldo-positivo' : 'saldo-negativo'}">${formatMoneda(saldoAcumulado)}</span></td>
         `;
         tbody.appendChild(row4);
     } else if (totalFinalPrestamos < 0) {
-        // Mostrar info de que ya está incluido en el efectivo
+        // Si es negativo, solo mostrar mensaje de deuda (NO afecta el saldo)
         const rowInfo = document.createElement('tr');
         rowInfo.innerHTML = `
-            <td>👥 Préstamos Negativos (ya sumados al efectivo)</td>
-            <td class="monto-positivo">+${formatMoneda(Math.abs(totalFinalPrestamos))}</td>
-            <td><span class="${saldoAcumulado >= 0 ? 'saldo-positivo' : 'saldo-negativo'}">${formatMoneda(saldoAcumulado)}</span></td>
+            <td>👥 Préstamos Negativos</td>
+            <td colspan="2" style="color: #dc2626; font-weight: 700; text-align: center;">
+                ⚠️ Hay personas que deben ${formatMoneda(Math.abs(totalFinalPrestamos))} - Ver tabla de detalle
+            </td>
         `;
         tbody.appendChild(rowInfo);
     }
@@ -264,13 +263,23 @@ function mostrarTablaPorPersona(prestamos) {
     // Crear filas
     personasOrdenadas.forEach(([persona, datos]) => {
         const row = document.createElement('tr');
-        const claseColor = datos.totalFinal >= 0 ? 'saldo-positivo' : 'saldo-negativo';
-        const signo = datos.totalFinal >= 0 ? '' : '-';
         
-        row.innerHTML = `
-            <td><strong>${persona}</strong></td>
-            <td><span class="${claseColor}">${signo}${formatMoneda(Math.abs(datos.totalFinal))}</span></td>
-        `;
+        if (datos.totalFinal >= 0) {
+            // Total positivo: Se resta del efectivo (se muestra normal)
+            row.innerHTML = `
+                <td><strong>${persona}</strong></td>
+                <td><span class="saldo-positivo">${formatMoneda(datos.totalFinal)}</span></td>
+            `;
+        } else {
+            // Total negativo: La persona debe dinero (mensaje especial)
+            row.innerHTML = `
+                <td><strong>${persona}</strong></td>
+                <td style="color: #dc2626; font-weight: 700;">
+                    ⚠️ DEBE ${formatMoneda(Math.abs(datos.totalFinal))}
+                </td>
+            `;
+        }
+        
         tbody.appendChild(row);
     });
     
