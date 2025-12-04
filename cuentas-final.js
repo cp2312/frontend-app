@@ -115,41 +115,44 @@ async function cargarDatos() {
             .filter(p => p.tipo === 'Gasto')
             .reduce((sum, p) => sum + parseFloat(p.monto || 0), 0);
         
+        // Total Final de Préstamos = Préstamos - Gastos
+        const totalFinalPrestamosBruto = totalPrestamosPersonales - totalGastosPersonales;
+        
         // Calcular total final por persona para obtener solo los POSITIVOS
-        const porPersona = {};
+        const porPersonaTemp = {};
         prestamos.forEach(prestamo => {
             const persona = prestamo.persona || 'Sin Asignar';
-            if (!porPersona[persona]) {
-                porPersona[persona] = { prestamos: 0, gastos: 0 };
+            if (!porPersonaTemp[persona]) {
+                porPersonaTemp[persona] = { prestamos: 0, gastos: 0 };
             }
             const monto = parseFloat(prestamo.monto || 0);
             if (prestamo.tipo === 'Prestamo') {
-                porPersona[persona].prestamos += monto;
+                porPersonaTemp[persona].prestamos += monto;
             } else if (prestamo.tipo === 'Gasto') {
-                porPersona[persona].gastos += monto;
+                porPersonaTemp[persona].gastos += monto;
             }
         });
         
         // Sumar SOLO los totales finales POSITIVOS (los que se restan del efectivo)
-        const totalFinalPrestamosPositivos = Object.values(porPersona).reduce((sum, datos) => {
+        let totalFinalPrestamosPositivos = 0;
+        Object.values(porPersonaTemp).forEach(datos => {
             const totalFinal = datos.prestamos - datos.gastos;
-            return sum + (totalFinal > 0 ? totalFinal : 0);
-        }, 0);
+            if (totalFinal > 0) {
+                totalFinalPrestamosPositivos += totalFinal;
+            }
+        });
         
-        // Efectivo sin ajustes inicialmente
-        let efectivoAjustado = totalEfectivo;
-        
-        // Restar solo los préstamos positivos del efectivo
-        efectivoAjustado -= totalFinalPrestamosPositivos;
+        // Efectivo original
+        const efectivoOriginal = totalEfectivo;
         
         // Actualizar tarjetas de estadísticas
         document.getElementById('totalProductos').textContent = formatMoneda(totalFinalProductos);
-        document.getElementById('totalEfectivo').textContent = formatMoneda(totalEfectivo); // Mostrar efectivo original
+        document.getElementById('totalEfectivo').textContent = formatMoneda(efectivoOriginal);
         document.getElementById('totalOtrosGastos').textContent = formatMoneda(totalOtrosGastos);
-        document.getElementById('totalPrestamos').textContent = formatMoneda(totalFinalPrestamosPositivos); // Solo positivos
+        document.getElementById('totalPrestamos').textContent = formatMoneda(totalFinalPrestamosPositivos);
         
         // Calcular balance final
-        let balanceFinal = totalEfectivo - totalFinalProductos - totalOtrosGastos - totalFinalPrestamosPositivos;
+        const balanceFinal = efectivoOriginal - totalFinalProductos - totalOtrosGastos - totalFinalPrestamosPositivos;
         
         const balanceElement = document.getElementById('balanceFinal');
         balanceElement.textContent = formatMoneda(balanceFinal);
