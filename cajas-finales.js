@@ -197,18 +197,32 @@ async function cargarSemanas() {
 // Cargar cierres de caja desde la API
 async function cargarCierres() {
     if (!semanaActual || !semanaActual.id) {
+        console.error('No hay semana seleccionada para cargar cierres');
         mostrarError('No hay una semana seleccionada');
         return;
     }
     
+    console.log(`Cargando cierres para semana ID: ${semanaActual.id}`);
+    
     mostrarCarga(true);
     
     try {
-        const response = await fetch(`${API_URL}/api/cierres/semana/${semanaActual.id}`);
+        const url = `${API_URL}/api/cierres/semana/${semanaActual.id}`;
+        console.log(`Fetching: ${url}`);
         
-        if (!response.ok) throw new Error('Error al cargar cierres de caja');
+        const response = await fetch(url);
+        
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error al cargar cierres:', errorText);
+            throw new Error('Error al cargar cierres de caja');
+        }
         
         cierresDB = await response.json();
+        console.log(`Cierres cargados: ${cierresDB.length} cierres`, cierresDB);
+        
         actualizarInterfazCierres();
         actualizarResumenCierres();
         mostrarNotificacion('Cierres de caja actualizados correctamente');
@@ -254,7 +268,16 @@ function calcularDiferencia(cierre) {
 // Actualizar interfaz de un cierre específico
 function actualizarCierreUI(dia, numeroCaja = 1) {
     const cierre = obtenerCierre(dia, numeroCaja);
-    const idSuffix = numeroCaja > 1 ? `-${dia}-${numeroCaja}` : `-${dia}`;
+    
+    // Crear el ID suffix según cómo están en el HTML
+    let idSuffix;
+    if (dia === 'sabado' || dia === 'lunes') {
+        idSuffix = `-${dia}`;
+    } else {
+        idSuffix = `-${dia}-${numeroCaja}`;
+    }
+    
+    console.log(`Actualizando cierre: ${dia}, caja: ${numeroCaja}, ID suffix: ${idSuffix}`);
     
     if (cierre) {
         // Calcular totales
@@ -262,60 +285,106 @@ function actualizarCierreUI(dia, numeroCaja = 1) {
         const diferencia = calcularDiferencia(cierre);
         const totalPrestamos = parseFloat(cierre.prestamos_total || 0);
         
+        console.log(`Cierre encontrado:`, cierre);
+        console.log(`- Total efectivo: ${cierre.total_efectivo}`);
+        console.log(`- Prestamos:`, cierre.prestamos);
+        
         // Actualizar valores principales
-        document.getElementById(`total-efectivo${idSuffix}`).textContent = formatMoney(cierre.total_efectivo);
-        document.getElementById(`base${idSuffix}`).textContent = formatMoney(cierre.base);
-        document.getElementById(`llevar${idSuffix}`).textContent = formatMoney(cierre.llevar || 0);
-        document.getElementById(`ventas${idSuffix}`).textContent = formatMoney(cierre.ventas);
-        document.getElementById(`talonarios${idSuffix}`).textContent = formatMoney(cierre.talonarios);
-        document.getElementById(`otro${idSuffix}`).textContent = formatMoney(cierre.otro || 0);
+        const elementos = {
+            totalEfectivo: document.getElementById(`total-efectivo${idSuffix}`),
+            base: document.getElementById(`base${idSuffix}`),
+            llevar: document.getElementById(`llevar${idSuffix}`),
+            ventas: document.getElementById(`ventas${idSuffix}`),
+            talonarios: document.getElementById(`talonarios${idSuffix}`),
+            otro: document.getElementById(`otro${idSuffix}`),
+            totalDetalle: document.getElementById(`total${idSuffix}-detalle`),
+            diferencia: document.getElementById(`diferencia${idSuffix}`),
+            totalPrestamos: document.getElementById(`total-prestamos${idSuffix}`)
+        };
         
-        // Actualizar totales
-        document.getElementById(`total${idSuffix}-detalle`).textContent = formatMoney(totalConceptos);
-        document.getElementById(`diferencia${idSuffix}`).textContent = formatMoney(diferencia);
+        // Actualizar valores si los elementos existen
+        if (elementos.totalEfectivo) elementos.totalEfectivo.textContent = formatMoney(cierre.total_efectivo || 0);
+        if (elementos.base) elementos.base.textContent = formatMoney(cierre.base || 0);
+        if (elementos.llevar) elementos.llevar.textContent = formatMoney(cierre.llevar || 0);
+        if (elementos.ventas) elementos.ventas.textContent = formatMoney(cierre.ventas || 0);
+        if (elementos.talonarios) elementos.talonarios.textContent = formatMoney(cierre.talonarios || 0);
+        if (elementos.otro) elementos.otro.textContent = formatMoney(cierre.otro || 0);
         
-        // Actualizar préstamos
-        document.getElementById(`total-prestamos${idSuffix}`).textContent = formatMoney(totalPrestamos);
+        if (elementos.totalDetalle) elementos.totalDetalle.textContent = formatMoney(totalConceptos);
+        if (elementos.diferencia) elementos.diferencia.textContent = formatMoney(diferencia);
+        if (elementos.totalPrestamos) elementos.totalPrestamos.textContent = formatMoney(totalPrestamos);
         
         // Actualizar lista de préstamos
-        const prestamosBody = document.getElementById(`prestamos-body${idSuffix}`);
-        if (cierre.prestamos && cierre.prestamos.length > 0) {
-            let html = '';
-            cierre.prestamos.forEach((prestamo, index) => {
-                html += `
+        const prestamosBodyId = `prestamos-body${idSuffix}`;
+        const prestamosBody = document.getElementById(prestamosBodyId);
+        
+        if (prestamosBody) {
+            // Asegurarse de que prestamos sea un array
+            let prestamosArray = [];
+            if (Array.isArray(cierre.prestamos)) {
+                prestamosArray = cierre.prestamos;
+            } else if (typeof cierre.prestamos === 'string') {
+                // Si es un string JSON, parsearlo
+                try {
+                    prestamosArray = JSON.parse(cierre.prestamos);
+                } catch (e) {
+                    console.error('Error parseando préstamos:', e);
+                    prestamosArray = [];
+                }
+            }
+            
+            console.log(`Préstamos procesados para ${dia}:`, prestamosArray);
+            
+            if (prestamosArray && prestamosArray.length > 0) {
+                let html = '';
+                prestamosArray.forEach((prestamo, index) => {
+                    html += `
+                        <tr>
+                            <td>${prestamo.concepto || `Préstamo ${index + 1}`}</td>
+                            <td class="valor">${formatMoney(prestamo.monto || 0)}</td>
+                        </tr>
+                    `;
+                });
+                prestamosBody.innerHTML = html;
+            } else {
+                prestamosBody.innerHTML = `
                     <tr>
-                        <td>${prestamo.concepto || `Préstamo ${index + 1}`}</td>
-                        <td class="valor">${formatMoney(prestamo.monto || 0)}</td>
+                        <td colspan="2" class="sin-prestamos">No hay préstamos</td>
                     </tr>
                 `;
-            });
-            prestamosBody.innerHTML = html;
-        } else {
+            }
+        }
+    } else {
+        console.log(`No se encontró cierre para ${dia} caja ${numeroCaja}`);
+        
+        // Si no hay cierre, mostrar ceros
+        const elementos = {
+            totalEfectivo: document.getElementById(`total-efectivo${idSuffix}`),
+            base: document.getElementById(`base${idSuffix}`),
+            llevar: document.getElementById(`llevar${idSuffix}`),
+            ventas: document.getElementById(`ventas${idSuffix}`),
+            talonarios: document.getElementById(`talonarios${idSuffix}`),
+            otro: document.getElementById(`otro${idSuffix}`),
+            totalDetalle: document.getElementById(`total${idSuffix}-detalle`),
+            diferencia: document.getElementById(`diferencia${idSuffix}`),
+            totalPrestamos: document.getElementById(`total-prestamos${idSuffix}`)
+        };
+        
+        for (const [nombre, elemento] of Object.entries(elementos)) {
+            if (elemento) {
+                elemento.textContent = formatMoney(0);
+            }
+        }
+        
+        const prestamosBodyId = `prestamos-body${idSuffix}`;
+        const prestamosBody = document.getElementById(prestamosBodyId);
+        if (prestamosBody) {
             prestamosBody.innerHTML = `
                 <tr>
                     <td colspan="2" class="sin-prestamos">No hay préstamos</td>
                 </tr>
             `;
         }
-    } else {
-        // Si no hay cierre, mostrar ceros
-        document.getElementById(`total-efectivo${idSuffix}`).textContent = formatMoney(0);
-        document.getElementById(`base${idSuffix}`).textContent = formatMoney(0);
-        document.getElementById(`llevar${idSuffix}`).textContent = formatMoney(0);
-        document.getElementById(`ventas${idSuffix}`).textContent = formatMoney(0);
-        document.getElementById(`talonarios${idSuffix}`).textContent = formatMoney(0);
-        document.getElementById(`otro${idSuffix}`).textContent = formatMoney(0);
-        
-        document.getElementById(`total${idSuffix}-detalle`).textContent = formatMoney(0);
-        document.getElementById(`diferencia${idSuffix}`).textContent = formatMoney(0);
-        document.getElementById(`total-prestamos${idSuffix}`).textContent = formatMoney(0);
-        
-        const prestamosBody = document.getElementById(`prestamos-body${idSuffix}`);
-        prestamosBody.innerHTML = `
-            <tr>
-                <td colspan="2" class="sin-prestamos">No hay préstamos</td>
-            </tr>
-        `;
     }
 }
 
@@ -394,11 +463,17 @@ function actualizarResumenCierres() {
     const totalesPorDia = calcularTotalesPorDia();
     
     // Actualizar resumen por día
-    document.getElementById('efectivo-sabado').textContent = formatMoney(totalesPorDia.efectivoSabado);
-    document.getElementById('efectivo-domingo').textContent = formatMoney(totalesPorDia.efectivoDomingo);
-    document.getElementById('efectivo-lunes').textContent = formatMoney(totalesPorDia.efectivoLunes);
-    document.getElementById('efectivo-total').textContent = formatMoney(totalesPorDia.efectivoTotal);
-    document.getElementById('diferencia-total').textContent = formatMoney(totalesPorDia.diferenciaTotal);
+    const efectivoSabadoElem = document.getElementById('efectivo-sabado');
+    const efectivoDomingoElem = document.getElementById('efectivo-domingo');
+    const efectivoLunesElem = document.getElementById('efectivo-lunes');
+    const efectivoTotalElem = document.getElementById('efectivo-total');
+    const diferenciaTotalElem = document.getElementById('diferencia-total');
+    
+    if (efectivoSabadoElem) efectivoSabadoElem.textContent = formatMoney(totalesPorDia.efectivoSabado);
+    if (efectivoDomingoElem) efectivoDomingoElem.textContent = formatMoney(totalesPorDia.efectivoDomingo);
+    if (efectivoLunesElem) efectivoLunesElem.textContent = formatMoney(totalesPorDia.efectivoLunes);
+    if (efectivoTotalElem) efectivoTotalElem.textContent = formatMoney(totalesPorDia.efectivoTotal);
+    if (diferenciaTotalElem) diferenciaTotalElem.textContent = formatMoney(totalesPorDia.diferenciaTotal);
 }
 
 // Modal functions
@@ -580,7 +655,10 @@ function toggleCajaLunes() {
 async function guardarCierre(e) {
     e.preventDefault();
     
+    console.log('=== INICIANDO GUARDAR CIERRE ===');
+    
     if (!semanaActual || !semanaActual.id) {
+        console.error('No hay semana seleccionada:', semanaActual);
         mostrarNotificacion('No hay una semana seleccionada', 'error');
         return;
     }
@@ -590,69 +668,100 @@ async function guardarCierre(e) {
     const numero_caja = parseInt(document.getElementById('cierre-numero').value) || 1;
     const total_efectivo = parseFloat(document.getElementById('total_efectivo').value);
     const base = parseFloat(document.getElementById('base').value);
-    const ventas = parseFloat(document.getElementById('ventas').value);
+    const ventas = parseFloat(document.getElementById('ventas').value) || 0; // Ahora es opcional
     const talonarios = parseFloat(document.getElementById('talonarios').value);
     const llevar = parseFloat(document.getElementById('llevar').value) || 0;
     const otro = parseFloat(document.getElementById('otro').value) || 0;
     const semana_id = semanaActual.id;
     
+    console.log('Datos del formulario:');
+    console.log('- ID:', id);
+    console.log('- Día:', dia);
+    console.log('- Número caja:', numero_caja);
+    console.log('- Total efectivo:', total_efectivo);
+    console.log('- Base:', base);
+    console.log('- Ventas:', ventas);
+    console.log('- Talonarios:', talonarios);
+    console.log('- Llevar:', llevar);
+    console.log('- Otro:', otro);
+    console.log('- Semana ID:', semana_id);
+    
     // Obtener préstamos
     const prestamos = [];
     const prestamoItems = document.querySelectorAll('.prestamo-item');
-    prestamoItems.forEach(item => {
+    console.log(`- Número de préstamos: ${prestamoItems.length}`);
+    
+    prestamoItems.forEach((item, index) => {
         const concepto = item.querySelector('.prestamo-concepto').value.trim();
-        const monto = parseFloat(item.querySelector('.prestamo-monto').value) || 0;
+        const montoInput = item.querySelector('.prestamo-monto');
+        const monto = montoInput ? parseFloat(montoInput.value) || 0 : 0;
         
-        if (concepto && monto > 0) {
+        console.log(`  Préstamo ${index + 1}: concepto="${concepto}", monto=${monto}`);
+        
+        // Solo agregar si tiene concepto o monto
+        if (concepto || monto > 0) {
             prestamos.push({
-                concepto,
-                monto
+                concepto: concepto || `Préstamo ${index + 1}`,
+                monto: monto
             });
         }
     });
     
     // Calcular total de préstamos
     const prestamos_total = prestamos.reduce((total, prestamo) => total + (prestamo.monto || 0), 0);
+    console.log('- Total préstamos:', prestamos_total);
     
     // Calcular diferencia
     const totalConceptos = base + llevar + ventas + talonarios + otro;
     const diferencia = (total_efectivo + prestamos_total) - totalConceptos;
+    console.log('- Total conceptos:', totalConceptos);
+    console.log('- Diferencia:', diferencia);
     
-    // Validaciones
-    if (!total_efectivo || total_efectivo < 0) {
-        mostrarNotificacion('El total efectivo es requerido y debe ser positivo', 'error');
+    // Validaciones de campos requeridos
+    if (isNaN(total_efectivo) || total_efectivo < 0) {
+        mostrarNotificacion('El total efectivo es requerido y debe ser un número positivo', 'error');
         return;
     }
     
-    if (!base || base < 0) {
-        mostrarNotificacion('La base es requerida y debe ser positiva', 'error');
+    if (isNaN(base) || base < 0) {
+        mostrarNotificacion('La base es requerida y debe ser un número positivo', 'error');
         return;
     }
     
-    if (!ventas || ventas < 0) {
-        mostrarNotificacion('Las ventas son requeridas y deben ser positivas', 'error');
+    if (isNaN(talonarios) || talonarios < 0) {
+        mostrarNotificacion('Los talonarios son requeridos y deben ser un número positivo', 'error');
         return;
     }
     
-    if (!talonarios || talonarios < 0) {
-        mostrarNotificacion('Los talonarios son requeridos y deben ser positivos', 'error');
+    // Validar que ventas no sea negativa (si se ingresa)
+    if (isNaN(ventas) || ventas < 0) {
+        mostrarNotificacion('Las ventas deben ser un número positivo (o dejarlas en 0)', 'error');
         return;
     }
     
+    // Validar que número_caja sea 1 o 2
+    if (numero_caja !== 1 && numero_caja !== 2) {
+        mostrarNotificacion('El número de caja debe ser 1 o 2', 'error');
+        return;
+    }
+    
+    // Preparar datos para enviar
     const cierreData = {
         dia: dia.charAt(0).toUpperCase() + dia.slice(1).toLowerCase(),
-        numero_caja,
-        total_efectivo,
-        base,
-        ventas,
-        talonarios,
-        llevar,
-        otro,
-        diferencia,
-        semana_id,
+        numero_caja: numero_caja,
+        total_efectivo: total_efectivo,
+        base: base,
+        ventas: ventas || 0,  // Asegurar que si está vacío sea 0
+        talonarios: talonarios,
+        llevar: llevar || 0,
+        otro: otro || 0,
+        diferencia: diferencia,
+        semana_id: semana_id,
         prestamos: prestamos.length > 0 ? prestamos : [],
-        prestamos_total
+        prestamos_total: prestamos_total
     };
+    
+    console.log('Datos a enviar a la API:', JSON.stringify(cierreData, null, 2));
     
     try {
         let response;
@@ -663,22 +772,40 @@ async function guardarCierre(e) {
             // Editar cierre existente
             url = `${API_URL}/api/cierres/${id}`;
             method = 'PUT';
+            console.log(`Editando cierre existente con ID: ${id}`);
+        } else {
+            console.log('Creando nuevo cierre');
         }
+        
+        console.log(`Enviando ${method} request a: ${url}`);
         
         response = await fetch(url, {
             method: method,
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify(cierreData)
         });
         
+        console.log('Respuesta recibida, status:', response.status);
+        
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Error al guardar el cierre');
+            let errorMessage = 'Error al guardar el cierre';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorData.error || errorMessage;
+                console.error('Error detallado:', errorData);
+            } catch (jsonError) {
+                const errorText = await response.text();
+                console.error('Error text:', errorText);
+                errorMessage = errorText || errorMessage;
+            }
+            throw new Error(errorMessage);
         }
         
         const nuevoCierre = await response.json();
+        console.log('Cierre guardado exitosamente:', nuevoCierre);
         
         // Actualizar datos locales
         if (id) {
@@ -698,8 +825,17 @@ async function guardarCierre(e) {
             'success'
         );
     } catch (error) {
-        console.error('Error:', error);
-        mostrarNotificacion(error.message || 'Error al guardar el cierre', 'error');
+        console.error('Error al guardar:', error);
+        
+        // Mensajes de error más específicos
+        let mensajeError = error.message;
+        if (error.message.includes('Failed to fetch')) {
+            mensajeError = 'Error de conexión con el servidor. Verifica tu internet.';
+        } else if (error.message.includes('JSON')) {
+            mensajeError = 'Error en el formato de datos. Contacta al administrador.';
+        }
+        
+        mostrarNotificacion(mensajeError || 'Error al guardar el cierre', 'error');
     }
 }
 
