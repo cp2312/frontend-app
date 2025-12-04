@@ -394,7 +394,7 @@ function actualizarResumenCierres() {
     document.getElementById('dinero-neto').textContent = formatMoney(totalesGenerales.dineroNeto);
 }
 
-// Modal functions
+// Modal functions - versión actualizada
 function abrirModalCierre(dia, numeroCaja = 1) {
     const titulo = document.getElementById('modal-cierre-titulo');
     const form = document.getElementById('form-cierre');
@@ -409,32 +409,39 @@ function abrirModalCierre(dia, numeroCaja = 1) {
     document.getElementById('cierre-id').value = cierre ? cierre.id : '';
     document.getElementById('cierre-dia').value = dia;
     document.getElementById('cierre-numero').value = numeroCaja;
+    document.getElementById('dia').value = dia;
+    document.getElementById('numero-caja').value = numeroCaja.toString();
     
-    // Si es sábado, ocultar número de caja
+    // Si es sábado o lunes, ocultar número de caja
     const numeroCajaContainer = document.getElementById('numero-caja-container');
+    const numeroCajaSelect = document.getElementById('numero-caja');
+    
     if (dia === 'sabado' || dia === 'lunes') {
         numeroCajaContainer.style.display = 'none';
-        document.getElementById('numero-caja').value = '1';
+        numeroCajaSelect.value = '1';
     } else {
         numeroCajaContainer.style.display = 'block';
-        document.getElementById('numero-caja').value = numeroCaja.toString();
+        numeroCajaSelect.value = numeroCaja.toString();
     }
     
     // Si es edición, cargar datos
     if (cierre) {
-        document.getElementById('dia').value = cierre.dia.toLowerCase();
-        document.getElementById('total_efectivo').value = cierre.total_efectivo;
-        document.getElementById('base').value = cierre.base;
+        document.getElementById('total_efectivo').value = cierre.total_efectivo || '';
+        document.getElementById('base').value = cierre.base || '';
         document.getElementById('llevar').value = cierre.llevar || 0;
-        document.getElementById('ventas').value = cierre.ventas;
-        document.getElementById('talonarios').value = cierre.talonarios;
+        document.getElementById('ventas').value = cierre.ventas || '';
+        document.getElementById('talonarios').value = cierre.talonarios || '';
         document.getElementById('otro').value = cierre.otro || 0;
         document.getElementById('observaciones').value = cierre.observaciones || '';
     } else {
-        // Nuevo cierre
-        form.reset();
-        document.getElementById('dia').value = dia;
-        document.getElementById('numero-caja').value = numeroCaja.toString();
+        // Nuevo cierre - resetear formulario
+        document.getElementById('total_efectivo').value = '';
+        document.getElementById('base').value = '';
+        document.getElementById('llevar').value = 0;
+        document.getElementById('ventas').value = '';
+        document.getElementById('talonarios').value = '';
+        document.getElementById('otro').value = 0;
+        document.getElementById('observaciones').value = '';
     }
     
     // Calcular y mostrar diferencia
@@ -442,6 +449,17 @@ function abrirModalCierre(dia, numeroCaja = 1) {
     
     // Mostrar modal
     modalCierre.style.display = 'block';
+    
+    // Enfocar el primer campo
+    setTimeout(() => {
+        document.getElementById('total_efectivo').focus();
+    }, 100);
+    
+    // Scroll al inicio del modal
+    const modalContent = document.querySelector('.modal-content.modal-lg');
+    if (modalContent) {
+        modalContent.scrollTop = 0;
+    }
 }
 
 function cerrarModalCierre() {

@@ -519,10 +519,100 @@ select:focus {
     animation: slideIn 0.3s ease;
 }
 
+/* Correcciones para el modal */
 .modal-content.modal-lg {
-    max-width: 800px;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
 }
 
+/* Asegurar que el formulario se vea completo */
+#form-cierre {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 0;
+}
+
+.form-group {
+    margin-bottom: 0;
+}
+
+/* Ajustar textarea */
+.form-group textarea {
+    min-height: 60px;
+    max-height: 100px;
+}
+
+/* Diferencia display más compacto */
+#diferencia-container {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    margin: 10px 0;
+}
+
+.diferencia-display {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+    border: 2px solid #e2e8f0;
+    color: #ef4444;
+    margin-top: 8px;
+}
+
+/* Botones del modal fijos en la parte inferior */
+.modal-buttons {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 20px 0 0 0;
+    margin-top: auto;
+    border-top: 2px solid #e2e8f0;
+}
+
+/* Scrollbar personalizado */
+.modal-content.modal-lg::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content.modal-lg::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.modal-content.modal-lg::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.modal-content.modal-lg::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Ajustes responsive para el modal */
+@media (max-width: 768px) {
+    .modal-content.modal-lg {
+        max-height: 90vh;
+        margin: 2% auto;
+        padding: 20px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
 @keyframes slideIn {
     from {
         transform: translateY(-50px);
