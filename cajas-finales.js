@@ -272,12 +272,15 @@ function actualizarCierreUI(dia, numeroCaja = 1) {
     // Crear el ID suffix según cómo están en el HTML
     let idSuffix;
     if (dia === 'sabado' || dia === 'lunes') {
+        // Para sábado y lunes: -sabado, -lunes
         idSuffix = `-${dia}`;
     } else {
+        // Para domingo: -domingo-1, -domingo-2
         idSuffix = `-${dia}-${numeroCaja}`;
     }
     
-    console.log(`Actualizando cierre: ${dia}, caja: ${numeroCaja}, ID suffix: ${idSuffix}`);
+    console.log(`Actualizando cierre: ${dia}, caja: ${numeroCaja}`);
+    console.log(`ID suffix: ${idSuffix}`);
     
     if (cierre) {
         // Calcular totales
@@ -285,34 +288,67 @@ function actualizarCierreUI(dia, numeroCaja = 1) {
         const diferencia = calcularDiferencia(cierre);
         const totalPrestamos = parseFloat(cierre.prestamos_total || 0);
         
-        console.log(`Cierre encontrado:`, cierre);
-        console.log(`- Total efectivo: ${cierre.total_efectivo}`);
-        console.log(`- Prestamos:`, cierre.prestamos);
+        console.log(`Cierre encontrado para ${dia} caja ${numeroCaja}:`, cierre);
         
-        // Actualizar valores principales
-        const elementos = {
-            totalEfectivo: document.getElementById(`total-efectivo${idSuffix}`),
-            base: document.getElementById(`base${idSuffix}`),
-            llevar: document.getElementById(`llevar${idSuffix}`),
-            ventas: document.getElementById(`ventas${idSuffix}`),
-            talonarios: document.getElementById(`talonarios${idSuffix}`),
-            otro: document.getElementById(`otro${idSuffix}`),
-            totalDetalle: document.getElementById(`total${idSuffix}-detalle`),
-            diferencia: document.getElementById(`diferencia${idSuffix}`),
-            totalPrestamos: document.getElementById(`total-prestamos${idSuffix}`)
-        };
+        // Debug: Verificar qué IDs existen
+        console.log(`Buscando elementos con estos IDs:`);
+        console.log(`- total-efectivo${idSuffix}:`, document.getElementById(`total-efectivo${idSuffix}`));
+        console.log(`- base${idSuffix}:`, document.getElementById(`base${idSuffix}`));
+        console.log(`- ventas${idSuffix}:`, document.getElementById(`ventas${idSuffix}`));
         
-        // Actualizar valores si los elementos existen
-        if (elementos.totalEfectivo) elementos.totalEfectivo.textContent = formatMoney(cierre.total_efectivo || 0);
-        if (elementos.base) elementos.base.textContent = formatMoney(cierre.base || 0);
-        if (elementos.llevar) elementos.llevar.textContent = formatMoney(cierre.llevar || 0);
-        if (elementos.ventas) elementos.ventas.textContent = formatMoney(cierre.ventas || 0);
-        if (elementos.talonarios) elementos.talonarios.textContent = formatMoney(cierre.talonarios || 0);
-        if (elementos.otro) elementos.otro.textContent = formatMoney(cierre.otro || 0);
+        // Lista de elementos a actualizar con sus IDs reales del HTML
+        const elementos = [
+            { key: 'totalEfectivo', id: `total-efectivo${idSuffix}` },
+            { key: 'base', id: `base${idSuffix}` },
+            { key: 'llevar', id: `llevar${idSuffix}` },
+            { key: 'ventas', id: `ventas${idSuffix}` },
+            { key: 'talonarios', id: `talonarios${idSuffix}` },
+            { key: 'otro', id: `otro${idSuffix}` },
+            { key: 'totalDetalle', id: `total${idSuffix}-detalle` },
+            { key: 'diferencia', id: `diferencia${idSuffix}` },
+            { key: 'totalPrestamos', id: `total-prestamos${idSuffix}` }
+        ];
         
-        if (elementos.totalDetalle) elementos.totalDetalle.textContent = formatMoney(totalConceptos);
-        if (elementos.diferencia) elementos.diferencia.textContent = formatMoney(diferencia);
-        if (elementos.totalPrestamos) elementos.totalPrestamos.textContent = formatMoney(totalPrestamos);
+        // Actualizar cada elemento
+        elementos.forEach(elem => {
+            const elemento = document.getElementById(elem.id);
+            if (elemento) {
+                let valor = 0;
+                switch(elem.key) {
+                    case 'totalEfectivo':
+                        valor = cierre.total_efectivo || 0;
+                        break;
+                    case 'base':
+                        valor = cierre.base || 0;
+                        break;
+                    case 'llevar':
+                        valor = cierre.llevar || 0;
+                        break;
+                    case 'ventas':
+                        valor = cierre.ventas || 0;
+                        break;
+                    case 'talonarios':
+                        valor = cierre.talonarios || 0;
+                        break;
+                    case 'otro':
+                        valor = cierre.otro || 0;
+                        break;
+                    case 'totalDetalle':
+                        valor = totalConceptos;
+                        break;
+                    case 'diferencia':
+                        valor = diferencia;
+                        break;
+                    case 'totalPrestamos':
+                        valor = totalPrestamos;
+                        break;
+                }
+                elemento.textContent = formatMoney(valor);
+                console.log(`Actualizado ${elem.id}: ${formatMoney(valor)}`);
+            } else {
+                console.warn(`Elemento no encontrado: ${elem.id}`);
+            }
+        });
         
         // Actualizar lista de préstamos
         const prestamosBodyId = `prestamos-body${idSuffix}`;
@@ -323,7 +359,7 @@ function actualizarCierreUI(dia, numeroCaja = 1) {
             let prestamosArray = [];
             if (Array.isArray(cierre.prestamos)) {
                 prestamosArray = cierre.prestamos;
-            } else if (typeof cierre.prestamos === 'string') {
+            } else if (typeof cierre.prestamos === 'string' && cierre.prestamos.trim() !== '') {
                 // Si es un string JSON, parsearlo
                 try {
                     prestamosArray = JSON.parse(cierre.prestamos);
@@ -353,28 +389,33 @@ function actualizarCierreUI(dia, numeroCaja = 1) {
                     </tr>
                 `;
             }
+        } else {
+            console.warn(`Elemento de préstamos no encontrado: ${prestamosBodyId}`);
         }
     } else {
         console.log(`No se encontró cierre para ${dia} caja ${numeroCaja}`);
         
-        // Si no hay cierre, mostrar ceros
-        const elementos = {
-            totalEfectivo: document.getElementById(`total-efectivo${idSuffix}`),
-            base: document.getElementById(`base${idSuffix}`),
-            llevar: document.getElementById(`llevar${idSuffix}`),
-            ventas: document.getElementById(`ventas${idSuffix}`),
-            talonarios: document.getElementById(`talonarios${idSuffix}`),
-            otro: document.getElementById(`otro${idSuffix}`),
-            totalDetalle: document.getElementById(`total${idSuffix}-detalle`),
-            diferencia: document.getElementById(`diferencia${idSuffix}`),
-            totalPrestamos: document.getElementById(`total-prestamos${idSuffix}`)
-        };
+        // Si no hay cierre, mostrar ceros en todos los elementos
+        const elementos = [
+            { id: `total-efectivo${idSuffix}` },
+            { id: `base${idSuffix}` },
+            { id: `llevar${idSuffix}` },
+            { id: `ventas${idSuffix}` },
+            { id: `talonarios${idSuffix}` },
+            { id: `otro${idSuffix}` },
+            { id: `total${idSuffix}-detalle` },
+            { id: `diferencia${idSuffix}` },
+            { id: `total-prestamos${idSuffix}` }
+        ];
         
-        for (const [nombre, elemento] of Object.entries(elementos)) {
+        elementos.forEach(elem => {
+            const elemento = document.getElementById(elem.id);
             if (elemento) {
                 elemento.textContent = formatMoney(0);
+            } else {
+                console.warn(`Elemento no encontrado al resetear: ${elem.id}`);
             }
-        }
+        });
         
         const prestamosBodyId = `prestamos-body${idSuffix}`;
         const prestamosBody = document.getElementById(prestamosBodyId);
@@ -425,10 +466,9 @@ function calcularTotalesPorDia() {
     // Sábado
     const cierreSabado = obtenerCierre('sabado');
     if (cierreSabado) {
-        totales.efectivoSabado = parseFloat(cierreSabado.total_efectivo || 0);
+        totales.efectivoSabado = parseFloat(cierreSabado.total_efectivo) || 0;
         totales.diferenciaSabado = calcularDiferencia(cierreSabado);
-        totales.efectivoTotal += totales.efectivoSabado;
-        totales.diferenciaTotal += totales.diferenciaSabado;
+        console.log(`Sábado: efectivo=${totales.efectivoSabado}, diferencia=${totales.diferenciaSabado}`);
     }
     
     // Domingo (sumar ambas cajas)
@@ -436,24 +476,29 @@ function calcularTotalesPorDia() {
     const cierreDomingo2 = obtenerCierre('domingo', 2);
     
     if (cierreDomingo1) {
-        totales.efectivoDomingo += parseFloat(cierreDomingo1.total_efectivo || 0);
+        totales.efectivoDomingo += parseFloat(cierreDomingo1.total_efectivo) || 0;
         totales.diferenciaDomingo += calcularDiferencia(cierreDomingo1);
+        console.log(`Domingo 1: efectivo=${parseFloat(cierreDomingo1.total_efectivo) || 0}`);
     }
     if (cierreDomingo2) {
-        totales.efectivoDomingo += parseFloat(cierreDomingo2.total_efectivo || 0);
+        totales.efectivoDomingo += parseFloat(cierreDomingo2.total_efectivo) || 0;
         totales.diferenciaDomingo += calcularDiferencia(cierreDomingo2);
+        console.log(`Domingo 2: efectivo=${parseFloat(cierreDomingo2.total_efectivo) || 0}`);
     }
-    totales.efectivoTotal += totales.efectivoDomingo;
-    totales.diferenciaTotal += totales.diferenciaDomingo;
     
     // Lunes festivo
     const cierreLunes = obtenerCierre('lunes');
     if (cierreLunes) {
-        totales.efectivoLunes = parseFloat(cierreLunes.total_efectivo || 0);
+        totales.efectivoLunes = parseFloat(cierreLunes.total_efectivo) || 0;
         totales.diferenciaLunes = calcularDiferencia(cierreLunes);
-        totales.efectivoTotal += totales.efectivoLunes;
-        totales.diferenciaTotal += totales.diferenciaLunes;
+        console.log(`Lunes: efectivo=${totales.efectivoLunes}, diferencia=${totales.diferenciaLunes}`);
     }
+    
+    // Calcular totales
+    totales.efectivoTotal = totales.efectivoSabado + totales.efectivoDomingo + totales.efectivoLunes;
+    totales.diferenciaTotal = totales.diferenciaSabado + totales.diferenciaDomingo + totales.diferenciaLunes;
+    
+    console.log('Totales calculados:', totales);
     
     return totales;
 }
@@ -462,18 +507,24 @@ function calcularTotalesPorDia() {
 function actualizarResumenCierres() {
     const totalesPorDia = calcularTotalesPorDia();
     
-    // Actualizar resumen por día
-    const efectivoSabadoElem = document.getElementById('efectivo-sabado');
-    const efectivoDomingoElem = document.getElementById('efectivo-domingo');
-    const efectivoLunesElem = document.getElementById('efectivo-lunes');
-    const efectivoTotalElem = document.getElementById('efectivo-total');
-    const diferenciaTotalElem = document.getElementById('diferencia-total');
+    console.log('Actualizando resumen con:', totalesPorDia);
     
-    if (efectivoSabadoElem) efectivoSabadoElem.textContent = formatMoney(totalesPorDia.efectivoSabado);
-    if (efectivoDomingoElem) efectivoDomingoElem.textContent = formatMoney(totalesPorDia.efectivoDomingo);
-    if (efectivoLunesElem) efectivoLunesElem.textContent = formatMoney(totalesPorDia.efectivoLunes);
-    if (efectivoTotalElem) efectivoTotalElem.textContent = formatMoney(totalesPorDia.efectivoTotal);
-    if (diferenciaTotalElem) diferenciaTotalElem.textContent = formatMoney(totalesPorDia.diferenciaTotal);
+    // Función segura para actualizar elementos
+    function actualizarElemento(id, valor) {
+        const elemento = document.getElementById(id);
+        if (elemento) {
+            elemento.textContent = formatMoney(valor);
+        } else {
+            console.warn(`Elemento de resumen no encontrado: ${id}`);
+        }
+    }
+    
+    // Actualizar resumen por día
+    actualizarElemento('efectivo-sabado', totalesPorDia.efectivoSabado);
+    actualizarElemento('efectivo-domingo', totalesPorDia.efectivoDomingo);
+    actualizarElemento('efectivo-lunes', totalesPorDia.efectivoLunes);
+    actualizarElemento('efectivo-total', totalesPorDia.efectivoTotal);
+    actualizarElemento('diferencia-total', totalesPorDia.diferenciaTotal);
 }
 
 // Modal functions
