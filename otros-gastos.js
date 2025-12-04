@@ -1,5 +1,5 @@
 // Configuración
-const API_URL = 'https://backend-express-production-a427.up.railway.app/api';
+const API_URL = 'https://backend-express-production-a427.up.railway.app';
 let semanaActual = null;
 let gastos = [];
 let gastoEditando = null;
