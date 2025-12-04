@@ -228,20 +228,38 @@ function obtenerCierre(dia, numeroCaja = 1) {
     );
 }
 
+// Calcular total de préstamos para un cierre
+function calcularTotalPrestamos(cierre) {
+    if (!cierre) return 0;
+    
+    return (parseFloat(cierre.prestamo_base || 0) +
+           parseFloat(cierre.prestamo_llevar || 0) +
+           parseFloat(cierre.prestamo_ventas || 0) +
+           parseFloat(cierre.prestamo_talonarios || 0) +
+           parseFloat(cierre.prestamo_otro || 0));
+}
+
+// Calcular total de conceptos (sin préstamos)
+function calcularTotalConceptos(cierre) {
+    if (!cierre) return 0;
+    
+    return (parseFloat(cierre.base || 0) +
+           parseFloat(cierre.llevar || 0) +
+           parseFloat(cierre.ventas || 0) +
+           parseFloat(cierre.talonarios || 0) +
+           parseFloat(cierre.otro || 0));
+}
+
 // Calcular diferencia para un cierre
 function calcularDiferencia(cierre) {
     if (!cierre) return 0;
     
-    const total = parseFloat(cierre.total_efectivo || 0);
-    const base = parseFloat(cierre.base || 0);
-    const ventas = parseFloat(cierre.ventas || 0);
-    const talonarios = parseFloat(cierre.talonarios || 0);
-    const otro = parseFloat(cierre.otro || 0);
-    const llevar = parseFloat(cierre.llevar || 0);
+    const totalEfectivo = parseFloat(cierre.total_efectivo || 0);
+    const totalConceptos = calcularTotalConceptos(cierre);
+    const totalPrestamos = calcularTotalPrestamos(cierre);
     
-    // Cálculo según el excel: TOTAL - (BASE + VENTAS + TALONARIOS + OTRO + LLEVAR)
-    const suma = base + ventas + talonarios + otro + llevar;
-    return total - suma;
+    // Fórmula: (Total Efectivo + Total Préstamos) - Total Conceptos
+    return (totalEfectivo + totalPrestamos) - totalConceptos;
 }
 
 // Actualizar interfaz de un cierre específico
@@ -250,34 +268,63 @@ function actualizarCierreUI(dia, numeroCaja = 1) {
     const idSuffix = numeroCaja > 1 ? `-${dia}-${numeroCaja}` : `-${dia}`;
     
     if (cierre) {
-        // Actualizar valores
-        document.getElementById(`total-efectivo${idSuffix}`).textContent = formatMoney(cierre.total_efectivo);
+        // Calcular totales
+        const totalPrestamos = calcularTotalPrestamos(cierre);
+        const totalConceptos = calcularTotalConceptos(cierre);
+        const diferencia = calcularDiferencia(cierre);
+        
+        // Actualizar préstamos totales
+        document.getElementById(`prestamos${idSuffix}`).textContent = formatMoney(totalPrestamos);
+        
+        // Actualizar valores principales
         document.getElementById(`base${idSuffix}`).textContent = formatMoney(cierre.base);
         document.getElementById(`llevar${idSuffix}`).textContent = formatMoney(cierre.llevar || 0);
         document.getElementById(`ventas${idSuffix}`).textContent = formatMoney(cierre.ventas);
         document.getElementById(`talonarios${idSuffix}`).textContent = formatMoney(cierre.talonarios);
         document.getElementById(`otro${idSuffix}`).textContent = formatMoney(cierre.otro || 0);
         
-        // Calcular y mostrar total
-        const total = parseFloat(cierre.base || 0) + 
-                     parseFloat(cierre.ventas || 0) + 
-                     parseFloat(cierre.talonarios || 0) + 
-                     parseFloat(cierre.otro || 0) + 
-                     parseFloat(cierre.llevar || 0);
-        document.getElementById(`total${idSuffix}-detalle`).textContent = formatMoney(total);
+        // Actualizar observaciones
+        document.getElementById(`base-obs${idSuffix}`).textContent = cierre.obs_base || '';
+        document.getElementById(`llevar-obs${idSuffix}`).textContent = cierre.obs_llevar || '';
+        document.getElementById(`ventas-obs${idSuffix}`).textContent = cierre.obs_ventas || '';
+        document.getElementById(`talonarios-obs${idSuffix}`).textContent = cierre.obs_talonarios || '';
+        document.getElementById(`otro-obs${idSuffix}`).textContent = cierre.obs_otro || '';
         
-        // Calcular y mostrar diferencia
-        const diferencia = calcularDiferencia(cierre);
+        // Actualizar préstamos individuales
+        document.getElementById(`base-prestamo${idSuffix}`).textContent = formatMoney(cierre.prestamo_base || 0);
+        document.getElementById(`llevar-prestamo${idSuffix}`).textContent = formatMoney(cierre.prestamo_llevar || 0);
+        document.getElementById(`ventas-prestamo${idSuffix}`).textContent = formatMoney(cierre.prestamo_ventas || 0);
+        document.getElementById(`talonarios-prestamo${idSuffix}`).textContent = formatMoney(cierre.prestamo_talonarios || 0);
+        document.getElementById(`otro-prestamo${idSuffix}`).textContent = formatMoney(cierre.prestamo_otro || 0);
+        
+        // Actualizar totales
+        document.getElementById(`total${idSuffix}-detalle`).textContent = formatMoney(totalConceptos);
+        document.getElementById(`total-prestamos${idSuffix}`).textContent = formatMoney(totalPrestamos);
         document.getElementById(`diferencia${idSuffix}`).textContent = formatMoney(diferencia);
     } else {
         // Si no hay cierre, mostrar ceros
-        document.getElementById(`total-efectivo${idSuffix}`).textContent = formatMoney(0);
+        document.getElementById(`prestamos${idSuffix}`).textContent = formatMoney(0);
+        
         document.getElementById(`base${idSuffix}`).textContent = formatMoney(0);
         document.getElementById(`llevar${idSuffix}`).textContent = formatMoney(0);
         document.getElementById(`ventas${idSuffix}`).textContent = formatMoney(0);
         document.getElementById(`talonarios${idSuffix}`).textContent = formatMoney(0);
         document.getElementById(`otro${idSuffix}`).textContent = formatMoney(0);
+        
+        document.getElementById(`base-obs${idSuffix}`).textContent = '';
+        document.getElementById(`llevar-obs${idSuffix}`).textContent = '';
+        document.getElementById(`ventas-obs${idSuffix}`).textContent = '';
+        document.getElementById(`talonarios-obs${idSuffix}`).textContent = '';
+        document.getElementById(`otro-obs${idSuffix}`).textContent = '';
+        
+        document.getElementById(`base-prestamo${idSuffix}`).textContent = formatMoney(0);
+        document.getElementById(`llevar-prestamo${idSuffix}`).textContent = formatMoney(0);
+        document.getElementById(`ventas-prestamo${idSuffix}`).textContent = formatMoney(0);
+        document.getElementById(`talonarios-prestamo${idSuffix}`).textContent = formatMoney(0);
+        document.getElementById(`otro-prestamo${idSuffix}`).textContent = formatMoney(0);
+        
         document.getElementById(`total${idSuffix}-detalle`).textContent = formatMoney(0);
+        document.getElementById(`total-prestamos${idSuffix}`).textContent = formatMoney(0);
         document.getElementById(`diferencia${idSuffix}`).textContent = formatMoney(0);
     }
 }
@@ -306,17 +353,23 @@ function actualizarInterfazCierres() {
 // Calcular totales por día
 function calcularTotalesPorDia() {
     const totales = {
-        sabado: 0,
-        domingo: 0,
-        lunes: 0,
+        efectivoSabado: 0,
+        efectivoDomingo: 0,
+        efectivoLunes: 0,
+        diferenciaSabado: 0,
+        diferenciaDomingo: 0,
+        diferenciaLunes: 0,
+        efectivoTotal: 0,
         diferenciaTotal: 0
     };
     
     // Sábado
     const cierreSabado = obtenerCierre('sabado');
     if (cierreSabado) {
-        totales.sabado = calcularDiferencia(cierreSabado);
-        totales.diferenciaTotal += totales.sabado;
+        totales.efectivoSabado = parseFloat(cierreSabado.total_efectivo || 0);
+        totales.diferenciaSabado = calcularDiferencia(cierreSabado);
+        totales.efectivoTotal += totales.efectivoSabado;
+        totales.diferenciaTotal += totales.diferenciaSabado;
     }
     
     // Domingo (sumar ambas cajas)
@@ -324,80 +377,43 @@ function calcularTotalesPorDia() {
     const cierreDomingo2 = obtenerCierre('domingo', 2);
     
     if (cierreDomingo1) {
-        totales.domingo += calcularDiferencia(cierreDomingo1);
+        totales.efectivoDomingo += parseFloat(cierreDomingo1.total_efectivo || 0);
+        totales.diferenciaDomingo += calcularDiferencia(cierreDomingo1);
     }
     if (cierreDomingo2) {
-        totales.domingo += calcularDiferencia(cierreDomingo2);
+        totales.efectivoDomingo += parseFloat(cierreDomingo2.total_efectivo || 0);
+        totales.diferenciaDomingo += calcularDiferencia(cierreDomingo2);
     }
-    totales.diferenciaTotal += totales.domingo;
+    totales.efectivoTotal += totales.efectivoDomingo;
+    totales.diferenciaTotal += totales.diferenciaDomingo;
     
     // Lunes festivo
     const cierreLunes = obtenerCierre('lunes');
     if (cierreLunes) {
-        totales.lunes = calcularDiferencia(cierreLunes);
-        totales.diferenciaTotal += totales.lunes;
+        totales.efectivoLunes = parseFloat(cierreLunes.total_efectivo || 0);
+        totales.diferenciaLunes = calcularDiferencia(cierreLunes);
+        totales.efectivoTotal += totales.efectivoLunes;
+        totales.diferenciaTotal += totales.diferenciaLunes;
     }
     
     return totales;
 }
 
-// Calcular totales generales
-function calcularTotalesGenerales() {
-    let efectivoTotal = 0;
-    let baseTotal = 0;
-    let ventasTotal = 0;
-    let talonariosTotal = 0;
-    let dineroNeto = 0;
-    
-    // Sumar todos los cierres
-    cierresDB.forEach(cierre => {
-        efectivoTotal += parseFloat(cierre.total_efectivo || 0);
-        baseTotal += parseFloat(cierre.base || 0);
-        ventasTotal += parseFloat(cierre.ventas || 0);
-        talonariosTotal += parseFloat(cierre.talonarios || 0);
-        dineroNeto += calcularDiferencia(cierre);
-    });
-    
-    return {
-        efectivoTotal,
-        baseTotal,
-        ventasTotal,
-        talonariosTotal,
-        dineroNeto
-    };
-}
-
 // Actualizar resumen de cierres
 function actualizarResumenCierres() {
     const totalesPorDia = calcularTotalesPorDia();
-    const totalesGenerales = calcularTotalesGenerales();
     
     // Actualizar resumen por día
-    document.getElementById('total-sabado').textContent = formatMoney(totalesPorDia.sabado);
-    document.getElementById('total-domingo').textContent = formatMoney(totalesPorDia.domingo);
-    document.getElementById('total-lunes').textContent = formatMoney(totalesPorDia.lunes);
-    
-    // Calcular total semanal (suma de diferencias positivas)
-    const totalSemanal = Math.max(0, totalesPorDia.sabado) + 
-                         Math.max(0, totalesPorDia.domingo) + 
-                         Math.max(0, totalesPorDia.lunes);
-    document.getElementById('total-semanal').textContent = formatMoney(totalSemanal);
-    
-    // Actualizar diferencia total
+    document.getElementById('efectivo-sabado').textContent = formatMoney(totalesPorDia.efectivoSabado);
+    document.getElementById('efectivo-domingo').textContent = formatMoney(totalesPorDia.efectivoDomingo);
+    document.getElementById('efectivo-lunes').textContent = formatMoney(totalesPorDia.efectivoLunes);
+    document.getElementById('efectivo-total').textContent = formatMoney(totalesPorDia.efectivoTotal);
     document.getElementById('diferencia-total').textContent = formatMoney(totalesPorDia.diferenciaTotal);
-    
-    // Actualizar resumen final
-    document.getElementById('efectivo-total').textContent = formatMoney(totalesGenerales.efectivoTotal);
-    document.getElementById('base-total').textContent = formatMoney(totalesGenerales.baseTotal);
-    document.getElementById('ventas-total').textContent = formatMoney(totalesGenerales.ventasTotal);
-    document.getElementById('talonarios-total').textContent = formatMoney(totalesGenerales.talonariosTotal);
-    document.getElementById('dinero-neto').textContent = formatMoney(totalesGenerales.dineroNeto);
 }
 
-// Modal functions - versión actualizada
+// Modal functions
 function abrirModalCierre(dia, numeroCaja = 1) {
     const titulo = document.getElementById('modal-cierre-titulo');
-    const form = document.getElementById('form-cierre');
     const cierre = obtenerCierre(dia, numeroCaja);
     
     // Configurar título
@@ -405,47 +421,74 @@ function abrirModalCierre(dia, numeroCaja = 1) {
     const tituloCaja = numeroCaja > 1 ? ` - Caja ${numeroCaja}` : '';
     titulo.textContent = cierre ? `Editar Cierre ${diaNombre}${tituloCaja}` : `Nuevo Cierre ${diaNombre}${tituloCaja}`;
     
-    // Configurar campos
+    // Configurar campos ocultos
     document.getElementById('cierre-id').value = cierre ? cierre.id : '';
     document.getElementById('cierre-dia').value = dia;
     document.getElementById('cierre-numero').value = numeroCaja;
+    
+    // Configurar día y número de caja
     document.getElementById('dia').value = dia;
     document.getElementById('numero-caja').value = numeroCaja.toString();
     
     // Si es sábado o lunes, ocultar número de caja
     const numeroCajaContainer = document.getElementById('numero-caja-container');
-    const numeroCajaSelect = document.getElementById('numero-caja');
-    
     if (dia === 'sabado' || dia === 'lunes') {
         numeroCajaContainer.style.display = 'none';
-        numeroCajaSelect.value = '1';
     } else {
         numeroCajaContainer.style.display = 'block';
-        numeroCajaSelect.value = numeroCaja.toString();
     }
     
     // Si es edición, cargar datos
     if (cierre) {
         document.getElementById('total_efectivo').value = cierre.total_efectivo || '';
         document.getElementById('base').value = cierre.base || '';
-        document.getElementById('llevar').value = cierre.llevar || 0;
         document.getElementById('ventas').value = cierre.ventas || '';
         document.getElementById('talonarios').value = cierre.talonarios || '';
+        document.getElementById('llevar').value = cierre.llevar || 0;
         document.getElementById('otro').value = cierre.otro || 0;
-        document.getElementById('observaciones').value = cierre.observaciones || '';
+        
+        // Préstamos y observaciones
+        document.getElementById('prestamo_base').value = cierre.prestamo_base || 0;
+        document.getElementById('obs_base').value = cierre.obs_base || '';
+        
+        document.getElementById('prestamo_llevar').value = cierre.prestamo_llevar || 0;
+        document.getElementById('obs_llevar').value = cierre.obs_llevar || '';
+        
+        document.getElementById('prestamo_ventas').value = cierre.prestamo_ventas || 0;
+        document.getElementById('obs_ventas').value = cierre.obs_ventas || '';
+        
+        document.getElementById('prestamo_talonarios').value = cierre.prestamo_talonarios || 0;
+        document.getElementById('obs_talonarios').value = cierre.obs_talonarios || '';
+        
+        document.getElementById('prestamo_otro').value = cierre.prestamo_otro || 0;
+        document.getElementById('obs_otro').value = cierre.obs_otro || '';
     } else {
         // Nuevo cierre - resetear formulario
         document.getElementById('total_efectivo').value = '';
         document.getElementById('base').value = '';
-        document.getElementById('llevar').value = 0;
         document.getElementById('ventas').value = '';
         document.getElementById('talonarios').value = '';
+        document.getElementById('llevar').value = 0;
         document.getElementById('otro').value = 0;
-        document.getElementById('observaciones').value = '';
+        
+        document.getElementById('prestamo_base').value = 0;
+        document.getElementById('obs_base').value = '';
+        
+        document.getElementById('prestamo_llevar').value = 0;
+        document.getElementById('obs_llevar').value = '';
+        
+        document.getElementById('prestamo_ventas').value = 0;
+        document.getElementById('obs_ventas').value = '';
+        
+        document.getElementById('prestamo_talonarios').value = 0;
+        document.getElementById('obs_talonarios').value = '';
+        
+        document.getElementById('prestamo_otro').value = 0;
+        document.getElementById('obs_otro').value = '';
     }
     
-    // Calcular y mostrar diferencia
-    calcularYMostrarDiferencia();
+    // Calcular y mostrar resumen
+    calcularYMostrarResumen();
     
     // Mostrar modal
     modalCierre.style.display = 'block';
@@ -456,10 +499,7 @@ function abrirModalCierre(dia, numeroCaja = 1) {
     }, 100);
     
     // Scroll al inicio del modal
-    const modalContent = document.querySelector('.modal-content.modal-lg');
-    if (modalContent) {
-        modalContent.scrollTop = 0;
-    }
+    modalCierre.scrollTop = 0;
 }
 
 function cerrarModalCierre() {
@@ -467,22 +507,37 @@ function cerrarModalCierre() {
     formCierre.reset();
 }
 
-// Calcular y mostrar diferencia en tiempo real
-function calcularYMostrarDiferencia() {
-    const totalEfectivo = parseFloat(document.getElementById('total_efectivo').value) || 0;
+// Calcular y mostrar resumen en tiempo real
+function calcularYMostrarResumen() {
+    // Obtener valores de conceptos
     const base = parseFloat(document.getElementById('base').value) || 0;
+    const llevar = parseFloat(document.getElementById('llevar').value) || 0;
     const ventas = parseFloat(document.getElementById('ventas').value) || 0;
     const talonarios = parseFloat(document.getElementById('talonarios').value) || 0;
     const otro = parseFloat(document.getElementById('otro').value) || 0;
-    const llevar = parseFloat(document.getElementById('llevar').value) || 0;
     
-    const suma = base + ventas + talonarios + otro + llevar;
-    const diferencia = totalEfectivo - suma;
+    // Obtener valores de préstamos
+    const prestamoBase = parseFloat(document.getElementById('prestamo_base').value) || 0;
+    const prestamoLlevar = parseFloat(document.getElementById('prestamo_llevar').value) || 0;
+    const prestamoVentas = parseFloat(document.getElementById('prestamo_ventas').value) || 0;
+    const prestamoTalonarios = parseFloat(document.getElementById('prestamo_talonarios').value) || 0;
+    const prestamoOtro = parseFloat(document.getElementById('prestamo_otro').value) || 0;
     
+    // Obtener total efectivo
+    const totalEfectivo = parseFloat(document.getElementById('total_efectivo').value) || 0;
+    
+    // Calcular totales
+    const totalConceptos = base + llevar + ventas + talonarios + otro;
+    const totalPrestamos = prestamoBase + prestamoLlevar + prestamoVentas + prestamoTalonarios + prestamoOtro;
+    const diferencia = (totalEfectivo + totalPrestamos) - totalConceptos;
+    
+    // Actualizar display
+    document.getElementById('total-conceptos-calculado').textContent = formatMoney(totalConceptos);
+    document.getElementById('total-prestamos-calculado').textContent = formatMoney(totalPrestamos);
+    document.getElementById('diferencia-calculada').textContent = formatMoney(diferencia);
+    
+    // Cambiar color de diferencia según resultado
     const diferenciaElem = document.getElementById('diferencia-calculada');
-    diferenciaElem.textContent = formatMoney(diferencia);
-    
-    // Cambiar color según resultado
     if (diferencia < 0) {
         diferenciaElem.style.color = '#ef4444';
     } else if (diferencia > 0) {
@@ -522,10 +577,30 @@ async function guardarCierre(e) {
     const base = parseFloat(document.getElementById('base').value);
     const ventas = parseFloat(document.getElementById('ventas').value);
     const talonarios = parseFloat(document.getElementById('talonarios').value);
-    const otro = parseFloat(document.getElementById('otro').value) || 0;
     const llevar = parseFloat(document.getElementById('llevar').value) || 0;
-    const observaciones = document.getElementById('observaciones').value.trim();
+    const otro = parseFloat(document.getElementById('otro').value) || 0;
     const semana_id = semanaActual.id;
+    
+    // Préstamos y observaciones
+    const prestamo_base = parseFloat(document.getElementById('prestamo_base').value) || 0;
+    const obs_base = document.getElementById('obs_base').value.trim();
+    
+    const prestamo_llevar = parseFloat(document.getElementById('prestamo_llevar').value) || 0;
+    const obs_llevar = document.getElementById('obs_llevar').value.trim();
+    
+    const prestamo_ventas = parseFloat(document.getElementById('prestamo_ventas').value) || 0;
+    const obs_ventas = document.getElementById('obs_ventas').value.trim();
+    
+    const prestamo_talonarios = parseFloat(document.getElementById('prestamo_talonarios').value) || 0;
+    const obs_talonarios = document.getElementById('obs_talonarios').value.trim();
+    
+    const prestamo_otro = parseFloat(document.getElementById('prestamo_otro').value) || 0;
+    const obs_otro = document.getElementById('obs_otro').value.trim();
+    
+    // Calcular diferencia
+    const totalPrestamos = prestamo_base + prestamo_llevar + prestamo_ventas + prestamo_talonarios + prestamo_otro;
+    const totalConceptos = base + llevar + ventas + talonarios + otro;
+    const diferencia = (total_efectivo + totalPrestamos) - totalConceptos;
     
     // Validaciones
     if (!total_efectivo || total_efectivo < 0) {
@@ -555,10 +630,21 @@ async function guardarCierre(e) {
         base,
         ventas,
         talonarios,
-        otro,
         llevar,
-        observaciones,
-        semana_id
+        otro,
+        diferencia,
+        semana_id,
+        // Nuevos campos para préstamos
+        prestamo_base,
+        obs_base,
+        prestamo_llevar,
+        obs_llevar,
+        prestamo_ventas,
+        obs_ventas,
+        prestamo_talonarios,
+        obs_talonarios,
+        prestamo_otro,
+        obs_otro
     };
     
     try {
@@ -654,12 +740,16 @@ function inicializar() {
         formCierre.addEventListener('submit', guardarCierre);
     }
     
-    // Event listeners para calcular diferencia en tiempo real
-    const camposCalculo = ['total_efectivo', 'base', 'llevar', 'ventas', 'talonarios', 'otro'];
+    // Event listeners para calcular en tiempo real
+    const camposCalculo = [
+        'total_efectivo', 'base', 'llevar', 'ventas', 'talonarios', 'otro',
+        'prestamo_base', 'prestamo_llevar', 'prestamo_ventas', 'prestamo_talonarios', 'prestamo_otro'
+    ];
+    
     camposCalculo.forEach(campo => {
         const elem = document.getElementById(campo);
         if (elem) {
-            elem.addEventListener('input', calcularYMostrarDiferencia);
+            elem.addEventListener('input', calcularYMostrarResumen);
         }
     });
     
