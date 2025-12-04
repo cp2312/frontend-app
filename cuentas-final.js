@@ -115,26 +115,41 @@ async function cargarDatos() {
             .filter(p => p.tipo === 'Gasto')
             .reduce((sum, p) => sum + parseFloat(p.monto || 0), 0);
         
-        // Total Final de Préstamos = Préstamos - Gastos
-        const totalFinalPrestamos = totalPrestamosPersonales - totalGastosPersonales;
+        // Calcular total final por persona para obtener solo los POSITIVOS
+        const porPersona = {};
+        prestamos.forEach(prestamo => {
+            const persona = prestamo.persona || 'Sin Asignar';
+            if (!porPersona[persona]) {
+                porPersona[persona] = { prestamos: 0, gastos: 0 };
+            }
+            const monto = parseFloat(prestamo.monto || 0);
+            if (prestamo.tipo === 'Prestamo') {
+                porPersona[persona].prestamos += monto;
+            } else if (prestamo.tipo === 'Gasto') {
+                porPersona[persona].gastos += monto;
+            }
+        });
+        
+        // Sumar SOLO los totales finales POSITIVOS (los que se restan del efectivo)
+        const totalFinalPrestamosPositivos = Object.values(porPersona).reduce((sum, datos) => {
+            const totalFinal = datos.prestamos - datos.gastos;
+            return sum + (totalFinal > 0 ? totalFinal : 0);
+        }, 0);
         
         // Efectivo sin ajustes inicialmente
         let efectivoAjustado = totalEfectivo;
         
-        // Si el total final de préstamos es POSITIVO, se resta del efectivo
-        // Si es NEGATIVO, solo se muestra en la tabla (deuda pendiente)
-        if (totalFinalPrestamos > 0) {
-            efectivoAjustado -= totalFinalPrestamos;
-        }
+        // Restar solo los préstamos positivos del efectivo
+        efectivoAjustado -= totalFinalPrestamosPositivos;
         
         // Actualizar tarjetas de estadísticas
         document.getElementById('totalProductos').textContent = formatMoneda(totalFinalProductos);
-        document.getElementById('totalEfectivo').textContent = formatMoneda(efectivoAjustado);
+        document.getElementById('totalEfectivo').textContent = formatMoneda(totalEfectivo); // Mostrar efectivo original
         document.getElementById('totalOtrosGastos').textContent = formatMoneda(totalOtrosGastos);
-        document.getElementById('totalPrestamos').textContent = formatMoneda(totalFinalPrestamos);
+        document.getElementById('totalPrestamos').textContent = formatMoneda(totalFinalPrestamosPositivos); // Solo positivos
         
         // Calcular balance final
-        let balanceFinal = efectivoAjustado - totalFinalProductos - totalOtrosGastos;
+        let balanceFinal = totalEfectivo - totalFinalProductos - totalOtrosGastos - totalFinalPrestamosPositivos;
         
         const balanceElement = document.getElementById('balanceFinal');
         balanceElement.textContent = formatMoneda(balanceFinal);
@@ -152,7 +167,7 @@ async function cargarDatos() {
 }
 
 // Mostrar tabla de desglose con resta acumulada
-function mostrarTablaDesglose(efectivo, totalFinalProductos, otrosGastos, totalFinalPrestamos) {
+function mostrarTablaDesglose(efectivo, totalFinalProductos, otrosGastos, totalFinalPrestamosPositivos) {
     const tbody = document.querySelector('#tablaDesglose tbody');
     tbody.innerHTML = '';
     
@@ -187,28 +202,15 @@ function mostrarTablaDesglose(efectivo, totalFinalProductos, otrosGastos, totalF
     `;
     tbody.appendChild(row3);
     
-    // Fila 4: Préstamos (solo si hay positivos se restan)
-    if (totalFinalPrestamos > 0) {
-        // Si es positivo, se resta del efectivo
-        saldoAcumulado -= totalFinalPrestamos;
-        const row4 = document.createElement('tr');
-        row4.innerHTML = `
-            <td>👥 Total Final Préstamos Positivos (se resta)</td>
-            <td class="monto-negativo">-${formatMoneda(totalFinalPrestamos)}</td>
-            <td><span class="${saldoAcumulado >= 0 ? 'saldo-positivo' : 'saldo-negativo'}">${formatMoneda(saldoAcumulado)}</span></td>
-        `;
-        tbody.appendChild(row4);
-    } else if (totalFinalPrestamos < 0) {
-        // Si es negativo, solo mostrar mensaje de deuda (NO afecta el saldo)
-        const rowInfo = document.createElement('tr');
-        rowInfo.innerHTML = `
-            <td>👥 Préstamos Negativos (deuda pendiente)</td>
-            <td colspan="2" style="color: #dc2626; font-weight: 700; text-align: center;">
-                ⚠️ Hay personas que deben ${formatMoneda(Math.abs(totalFinalPrestamos))} - Ver tabla de detalle abajo
-            </td>
-        `;
-        tbody.appendChild(rowInfo);
-    }
+    // Fila 4: Restar préstamos positivos
+    saldoAcumulado -= totalFinalPrestamosPositivos;
+    const row4 = document.createElement('tr');
+    row4.innerHTML = `
+        <td>👥 Total Final Préstamos Positivos (se resta)</td>
+        <td class="monto-negativo">-${formatMoneda(totalFinalPrestamosPositivos)}</td>
+        <td><span class="${saldoAcumulado >= 0 ? 'saldo-positivo' : 'saldo-negativo'}">${formatMoneda(saldoAcumulado)}</span></td>
+    `;
+    tbody.appendChild(row4);
     
     // Fila final: Balance
     const rowFinal = document.createElement('tr');
