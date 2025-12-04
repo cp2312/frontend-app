@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumen Semanal</title>
+    <link rel="stylesheet" href="cuentas-final.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-chart-line"></i> Resumen Semanal</h1>
+                <div class="semana-info">
+                    <div class="semana-card">
+                        <h3 id="nombreSemanaInfo">Cargando...</h3>
+                        <p id="fechaSemanaInfo">-</p>
+                        <p id="mesSemanaInfo">-</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-volver" onclick="volverAlDashboard()">
+                <i class="fas fa-arrow-left"></i> Volver al Dashboard
+            </button>
+        </header>
+
+        <!-- Tarjetas de Resumen -->
+        <div class="cards-grid">
+            <div class="card stat-card blue">
+                <div class="stat-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Total Productos</h3>
+                    <p class="stat-value" id="totalProductos">$0.00</p>
+                </div>
+            </div>
+
+            <div class="card stat-card green">
+                <div class="stat-icon">
+                    <i class="fas fa-cash-register"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Efectivo Total (Cierres)</h3>
+                    <p class="stat-value" id="totalEfectivo">$0.00</p>
+                </div>
+            </div>
+
+            <div class="card stat-card orange">
+                <div class="stat-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Otros Gastos</h3>
+                    <p class="stat-value" id="totalOtrosGastos">$0.00</p>
+                </div>
+            </div>
+
+            <div class="card stat-card purple">
+                <div class="stat-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Balance Final</h3>
+                    <p class="stat-value" id="balanceFinal">$0.00</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Desglose -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-table"></i> Desglose Financiero</h2>
+                <button class="btn-refresh" onclick="cargarDatos()" title="Actualizar">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            
+            <div class="table-container">
+                <table id="tablaDesglose">
+                    <thead>
+                        <tr>
+                            <th>Concepto</th>
+                            <th>Monto</th>
+                            <th>Saldo Acumulado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Los datos se cargarán aquí -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabla de Total por Persona -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-users"></i> Total por Persona (Productos)</h2>
+            </div>
+            
+            <div class="table-container">
+                <table id="tablaPorPersona">
+                    <thead>
+                        <tr>
+                            <th>Persona</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Los datos se cargarán aquí -->
+                    </tbody>
+                </table>
+                <div class="empty-state" id="sinPersonas">
+                    <i class="fas fa-users"></i>
+                    <h3>No hay datos por persona</h3>
+                    <p>Los productos no tienen asignación por persona</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="cuentas-final.js"></script>
+</body>
+</html>
