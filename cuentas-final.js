@@ -187,12 +187,13 @@ function mostrarTablaDesglose(efectivo, totalFinalProductos, otrosGastos, totalF
     `;
     tbody.appendChild(row3);
     
-    // Fila 4: Préstamos
+    // Fila 4: Préstamos (solo si hay positivos se restan)
     if (totalFinalPrestamos > 0) {
         // Si es positivo, se resta del efectivo
+        saldoAcumulado -= totalFinalPrestamos;
         const row4 = document.createElement('tr');
         row4.innerHTML = `
-            <td>👥 Total Final Préstamos (Préstamos - Gastos) ✅</td>
+            <td>👥 Total Final Préstamos Positivos (se resta)</td>
             <td class="monto-negativo">-${formatMoneda(totalFinalPrestamos)}</td>
             <td><span class="${saldoAcumulado >= 0 ? 'saldo-positivo' : 'saldo-negativo'}">${formatMoneda(saldoAcumulado)}</span></td>
         `;
@@ -201,9 +202,9 @@ function mostrarTablaDesglose(efectivo, totalFinalProductos, otrosGastos, totalF
         // Si es negativo, solo mostrar mensaje de deuda (NO afecta el saldo)
         const rowInfo = document.createElement('tr');
         rowInfo.innerHTML = `
-            <td>👥 Préstamos Negativos</td>
+            <td>👥 Préstamos Negativos (deuda pendiente)</td>
             <td colspan="2" style="color: #dc2626; font-weight: 700; text-align: center;">
-                ⚠️ Hay personas que deben ${formatMoneda(Math.abs(totalFinalPrestamos))} - Ver tabla de detalle
+                ⚠️ Hay personas que deben ${formatMoneda(Math.abs(totalFinalPrestamos))} - Ver tabla de detalle abajo
             </td>
         `;
         tbody.appendChild(rowInfo);
