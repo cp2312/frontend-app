@@ -113,7 +113,7 @@ async function cargarGastos() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/gastos/semana/${semanaActual.id}`);
+        const response = await fetch(`${API_URL}/api/otros/semana/${semanaActual.id}`);
         if (!response.ok) throw new Error('Error al cargar gastos');
         
         gastos = await response.json();
@@ -243,11 +243,11 @@ async function guardarGasto(e) {
     }
     
     try {
-        let url = `${API_URL}/gastos`;
+        let url = `${API_URL}/api/otros`;
         let method = 'POST';
         
         if (gastoEditando) {
-            url = `${API_URL}/gastos/${gastoEditando.id}`;
+            url = `${API_URL}/api/otros/${gastoEditando.id}`;
             method = 'PUT';
         }
         
@@ -345,7 +345,7 @@ async function eliminarGastoConfirmado() {
     if (!gastoAEliminar) return;
     
     try {
-        const response = await fetch(`${API_URL}/gastos/${gastoAEliminar}`, {
+        const response = await fetch(`${API_URL}/api/otros/${gastoAEliminar}`, {
             method: 'DELETE'
         });
         
