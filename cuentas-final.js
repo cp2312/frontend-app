@@ -284,15 +284,16 @@ function mostrarTablaPorPersona(prestamos) {
         tbody.appendChild(row);
     });
     
-    // Fila de total
-    const totalGeneralFinal = personasOrdenadas.reduce((sum, [_, datos]) => sum + datos.totalFinal, 0);
+    // Fila de total - SOLO sumar los POSITIVOS (los que se restan del efectivo)
+    const totalSoloPositivos = personasOrdenadas.reduce((sum, [_, datos]) => {
+        return sum + (datos.totalFinal > 0 ? datos.totalFinal : 0);
+    }, 0);
+    
     const rowTotal = document.createElement('tr');
-    const claseTotalColor = totalGeneralFinal >= 0 ? 'monto-positivo' : 'monto-negativo';
-    const signoTotal = totalGeneralFinal >= 0 ? '' : '-';
     
     rowTotal.innerHTML = `
-        <td><strong>TOTAL FINAL (Préstamos - Gastos)</strong></td>
-        <td><strong class="${claseTotalColor}">${signoTotal}${formatMoneda(Math.abs(totalGeneralFinal))}</strong></td>
+        <td><strong>TOTAL FINAL (Solo préstamos positivos a restar)</strong></td>
+        <td><strong class="monto-positivo">${formatMoneda(totalSoloPositivos)}</strong></td>
     `;
     tbody.appendChild(rowTotal);
 }
