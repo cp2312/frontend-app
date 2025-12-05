@@ -22,6 +22,17 @@ function formatFechaPDF(fechaString) {
     });
 }
 
+// Función para convertir cualquier valor a número
+function parseNumero(valor) {
+    if (valor === null || valor === undefined) return 0;
+    if (typeof valor === 'number') return valor;
+    if (typeof valor === 'string') {
+        const num = parseFloat(valor);
+        return isNaN(num) ? 0 : num;
+    }
+    return 0;
+}
+
 // Generar PDF completo
 async function generarPDFCompleto(semanaId, semanaData) {
     try {
@@ -44,16 +55,30 @@ async function generarPDFCompleto(semanaId, semanaData) {
 
         console.log('Cargando datos de la API...');
 
-        // Cargar todos los datos
-        const [productos, cierres, otrosGastos, prestamos, semana] = await Promise.all([
-            fetch(`${API_URL_PDF}/api/productos/semana/${semanaId}`).then(r => r.json()),
-            fetch(`${API_URL_PDF}/api/cierres/semana/${semanaId}`).then(r => r.json()),
-            fetch(`${API_URL_PDF}/api/otros/semana/${semanaId}`).then(r => r.json()),
-            fetch(`${API_URL_PDF}/api/prestamos/semana/${semanaId}`).then(r => r.json()),
-            semanaData || fetch(`${API_URL_PDF}/api/semanas/${semanaId}`).then(r => r.json())
-        ]);
+        // Cargar todos los datos con manejo de errores
+        let productos = [], cierres = [], otrosGastos = [], prestamos = [], semana = semanaData;
+        
+        try {
+            const responses = await Promise.allSettled([
+                fetch(`${API_URL_PDF}/api/productos/semana/${semanaId}`).then(r => r.json()),
+                fetch(`${API_URL_PDF}/api/cierres/semana/${semanaId}`).then(r => r.json()),
+                fetch(`${API_URL_PDF}/api/otros/semana/${semanaId}`).then(r => r.json()),
+                fetch(`${API_URL_PDF}/api/prestamos/semana/${semanaId}`).then(r => r.json()),
+                !semanaData ? fetch(`${API_URL_PDF}/api/semanas/${semanaId}`).then(r => r.json()) : Promise.resolve(semanaData)
+            ]);
 
-        console.log('Datos cargados:', { productos, cierres, otrosGastos, prestamos, semana });
+            productos = responses[0].status === 'fulfilled' ? responses[0].value : [];
+            cierres = responses[1].status === 'fulfilled' ? responses[1].value : [];
+            otrosGastos = responses[2].status === 'fulfilled' ? responses[2].value : [];
+            prestamos = responses[3].status === 'fulfilled' ? responses[3].value : [];
+            semana = responses[4].status === 'fulfilled' ? responses[4].value : semanaData;
+            
+            console.log('Datos cargados:', { productos, cierres, otrosGastos, prestamos, semana });
+            
+        } catch (fetchError) {
+            console.error('Error cargando datos:', fetchError);
+            throw new Error('Error al cargar los datos necesarios');
+        }
 
         // Crear documento PDF
         const { jsPDF } = window.jspdf;
@@ -86,37 +111,64 @@ async function generarPDFCompleto(semanaId, semanaData) {
         yPos += 8;
 
         const PRODUCTOS_ESTATICOS = ['Costilla', 'Asadura', 'Creadillas', 'Patas', 'Cabezas', 'Menudos', 'Manteca', 'Sangre', 'Guia'];
-        const productosReales = productos.filter(p => 
-            PRODUCTOS_ESTATICOS.some(pe => pe.toLowerCase() === p.nombre.toLowerCase()) && p.libras > 0
-        );
-
-        const productosData = productosReales.map(p => [
-            p.nombre,
-            formatMonedaPDF(p.precio_unitario),
-            p.libras.toFixed(2),
-            formatMonedaPDF(p.precio_unitario * p.libras)
-        ]);
-
-        const totalProductos = productosReales.reduce((sum, p) => 
-            sum + (parseFloat(p.precio_unitario) * parseFloat(p.libras)), 0
-        );
-
-        doc.autoTable({
-            startY: yPos,
-            head: [['Producto', 'Precio Unitario', 'Libras', 'Total']],
-            body: productosData,
-            foot: [['TOTAL PRODUCTOS', '', '', formatMonedaPDF(totalProductos)]],
-            theme: 'grid',
-            headStyles: { fillColor: [59, 130, 246], fontStyle: 'bold' },
-            footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' }
+        const productosReales = productos.filter(p => {
+            // Verificar si es un producto estático y tiene libras > 0
+            const esProductoEstatico = PRODUCTOS_ESTATICOS.some(pe => 
+                pe.toLowerCase() === p.nombre.toLowerCase()
+            );
+            const libras = parseNumero(p.libras);
+            return esProductoEstatico && libras > 0;
         });
 
-        yPos = doc.lastAutoTable.finalY + 15;
+        // Crear datos de tabla con manejo seguro de números
+        const productosData = productosReales.map(p => {
+            const precioUnitario = parseNumero(p.precio_unitario);
+            const libras = parseNumero(p.libras);
+            const total = precioUnitario * libras;
+            
+            return [
+                p.nombre || 'Sin nombre',
+                formatMonedaPDF(precioUnitario),
+                libras.toFixed(2), // Ahora seguro que es número
+                formatMonedaPDF(total)
+            ];
+        });
+
+        const totalProductos = productosReales.reduce((sum, p) => {
+            const precio = parseNumero(p.precio_unitario);
+            const libras = parseNumero(p.libras);
+            return sum + (precio * libras);
+        }, 0);
+
+        if (productosReales.length > 0) {
+            doc.autoTable({
+                startY: yPos,
+                head: [['Producto', 'Precio Unitario', 'Libras', 'Total']],
+                body: productosData,
+                foot: [['TOTAL PRODUCTOS', '', '', formatMonedaPDF(totalProductos)]],
+                theme: 'grid',
+                headStyles: { fillColor: [59, 130, 246], fontStyle: 'bold' },
+                footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+        } else {
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(100, 100, 100);
+            doc.text('No hay productos registrados', 14, yPos);
+            yPos += 15;
+        }
 
         // ========== GASTOS EN PRODUCTOS ==========
-        const gastosEnProductos = productos.filter(p => 
-            !PRODUCTOS_ESTATICOS.some(pe => pe.toLowerCase() === p.nombre.toLowerCase()) || p.libras === 0
-        );
+        const gastosEnProductos = productos.filter(p => {
+            const esProductoEstatico = PRODUCTOS_ESTATICOS.some(pe => 
+                pe.toLowerCase() === p.nombre.toLowerCase()
+            );
+            const libras = parseNumero(p.libras);
+            // Es un gasto si no es producto estático O es producto estático pero sin libras
+            return !esProductoEstatico || (esProductoEstatico && libras === 0);
+        });
 
         if (gastosEnProductos.length > 0) {
             doc.setFontSize(16);
@@ -126,12 +178,12 @@ async function generarPDFCompleto(semanaId, semanaData) {
             yPos += 8;
 
             const gastosProductosData = gastosEnProductos.map(g => [
-                g.nombre,
-                formatMonedaPDF(g.precio_unitario)
+                g.nombre || 'Sin concepto',
+                formatMonedaPDF(parseNumero(g.precio_unitario))
             ]);
 
             const totalGastosProductos = gastosEnProductos.reduce((sum, g) => 
-                sum + parseFloat(g.precio_unitario), 0
+                sum + parseNumero(g.precio_unitario), 0
             );
 
             doc.autoTable({
@@ -149,7 +201,7 @@ async function generarPDFCompleto(semanaId, semanaData) {
 
         // ========== TOTAL FINAL PRODUCTOS ==========
         const totalGastosProductos = gastosEnProductos.reduce((sum, g) => 
-            sum + parseFloat(g.precio_unitario), 0
+            sum + parseNumero(g.precio_unitario), 0
         );
         const totalFinalProductos = totalProductos - totalGastosProductos;
 
@@ -175,15 +227,15 @@ async function generarPDFCompleto(semanaId, semanaData) {
         doc.text('OTROS GASTOS', 14, yPos);
         yPos += 8;
 
-        if (otrosGastos.length > 0) {
+        if (otrosGastos && otrosGastos.length > 0) {
             const otrosGastosData = otrosGastos.map(g => [
-                formatFechaPDF(g.fecha),
-                g.concepto,
-                formatMonedaPDF(g.monto)
+                g.fecha ? formatFechaPDF(g.fecha) : 'Sin fecha',
+                g.concepto || 'Sin concepto',
+                formatMonedaPDF(parseNumero(g.monto))
             ]);
 
             const totalOtrosGastos = otrosGastos.reduce((sum, g) => 
-                sum + parseFloat(g.monto), 0
+                sum + parseNumero(g.monto), 0
             );
 
             doc.autoTable({
@@ -219,85 +271,109 @@ async function generarPDFCompleto(semanaId, semanaData) {
 
         // Agrupar por persona
         const porPersona = {};
-        prestamos.forEach(p => {
-            const persona = p.persona || 'Sin Asignar';
-            if (!porPersona[persona]) {
-                porPersona[persona] = { prestamos: [], gastos: [] };
-            }
-            if (p.tipo === 'Prestamo') {
-                porPersona[persona].prestamos.push(p);
-            } else {
-                porPersona[persona].gastos.push(p);
-            }
-        });
+        if (prestamos && Array.isArray(prestamos)) {
+            prestamos.forEach(p => {
+                const persona = p.persona || 'Sin Asignar';
+                if (!porPersona[persona]) {
+                    porPersona[persona] = { prestamos: [], gastos: [] };
+                }
+                if (p.tipo === 'Prestamo') {
+                    porPersona[persona].prestamos.push(p);
+                } else {
+                    porPersona[persona].gastos.push(p);
+                }
+            });
+        }
 
-        Object.entries(porPersona).forEach(([persona, datos]) => {
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(99, 102, 241);
-            doc.text(`${persona}`, 14, yPos);
-            yPos += 8;
+        if (Object.keys(porPersona).length > 0) {
+            Object.entries(porPersona).forEach(([persona, datos]) => {
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(99, 102, 241);
+                doc.text(`${persona}`, 14, yPos);
+                yPos += 8;
 
-            // Préstamos
-            if (datos.prestamos.length > 0) {
-                const prestamosData = datos.prestamos.map(p => [p.concepto, formatMonedaPDF(p.monto)]);
-                const totalPrestamos = datos.prestamos.reduce((sum, p) => sum + parseFloat(p.monto), 0);
+                // Préstamos
+                if (datos.prestamos.length > 0) {
+                    const prestamosData = datos.prestamos.map(p => [
+                        p.concepto || 'Sin concepto',
+                        formatMonedaPDF(parseNumero(p.monto))
+                    ]);
+                    const totalPrestamos = datos.prestamos.reduce((sum, p) => 
+                        sum + parseNumero(p.monto), 0
+                    );
 
-                doc.autoTable({
-                    startY: yPos,
-                    head: [['Prestamos - Concepto', 'Monto']],
-                    body: prestamosData,
-                    foot: [['Total Prestamos', formatMonedaPDF(totalPrestamos)]],
-                    theme: 'plain',
-                    headStyles: { fillColor: [16, 185, 129], fontStyle: 'bold', fontSize: 10 },
-                    footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' },
-                    margin: { left: 20 }
-                });
+                    doc.autoTable({
+                        startY: yPos,
+                        head: [['Prestamos - Concepto', 'Monto']],
+                        body: prestamosData,
+                        foot: [['Total Prestamos', formatMonedaPDF(totalPrestamos)]],
+                        theme: 'plain',
+                        headStyles: { fillColor: [16, 185, 129], fontStyle: 'bold', fontSize: 10 },
+                        footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' },
+                        margin: { left: 20 }
+                    });
 
-                yPos = doc.lastAutoTable.finalY + 5;
-            }
+                    yPos = doc.lastAutoTable.finalY + 5;
+                }
 
-            // Gastos
-            if (datos.gastos.length > 0) {
-                const gastosData = datos.gastos.map(g => [g.concepto, formatMonedaPDF(g.monto)]);
-                const totalGastos = datos.gastos.reduce((sum, g) => sum + parseFloat(g.monto), 0);
+                // Gastos
+                if (datos.gastos.length > 0) {
+                    const gastosData = datos.gastos.map(g => [
+                        g.concepto || 'Sin concepto',
+                        formatMonedaPDF(parseNumero(g.monto))
+                    ]);
+                    const totalGastos = datos.gastos.reduce((sum, g) => 
+                        sum + parseNumero(g.monto), 0
+                    );
 
-                doc.autoTable({
-                    startY: yPos,
-                    head: [['Gastos - Concepto', 'Monto']],
-                    body: gastosData,
-                    foot: [['Total Gastos', formatMonedaPDF(totalGastos)]],
-                    theme: 'plain',
-                    headStyles: { fillColor: [239, 68, 68], fontStyle: 'bold', fontSize: 10 },
-                    footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' },
-                    margin: { left: 20 }
-                });
+                    doc.autoTable({
+                        startY: yPos,
+                        head: [['Gastos - Concepto', 'Monto']],
+                        body: gastosData,
+                        foot: [['Total Gastos', formatMonedaPDF(totalGastos)]],
+                        theme: 'plain',
+                        headStyles: { fillColor: [239, 68, 68], fontStyle: 'bold', fontSize: 10 },
+                        footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' },
+                        margin: { left: 20 }
+                    });
 
-                yPos = doc.lastAutoTable.finalY + 5;
-            }
+                    yPos = doc.lastAutoTable.finalY + 5;
+                }
 
-            // Total Final por persona
-            const totalPrestamosPersona = datos.prestamos.reduce((sum, p) => sum + parseFloat(p.monto), 0);
-            const totalGastosPersona = datos.gastos.reduce((sum, g) => sum + parseFloat(g.monto), 0);
-            const totalFinal = totalPrestamosPersona - totalGastosPersona;
+                // Total Final por persona
+                const totalPrestamosPersona = datos.prestamos.reduce((sum, p) => 
+                    sum + parseNumero(p.monto), 0
+                );
+                const totalGastosPersona = datos.gastos.reduce((sum, g) => 
+                    sum + parseNumero(g.monto), 0
+                );
+                const totalFinal = totalPrestamosPersona - totalGastosPersona;
 
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            if (totalFinal >= 0) {
-                doc.setTextColor(16, 185, 129);
-                doc.text(`Total Final: ${formatMonedaPDF(totalFinal)}`, 20, yPos);
-            } else {
-                doc.setTextColor(239, 68, 68);
-                doc.text(`DEBE: ${formatMonedaPDF(Math.abs(totalFinal))}`, 20, yPos);
-            }
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                if (totalFinal >= 0) {
+                    doc.setTextColor(16, 185, 129);
+                    doc.text(`Total Final: ${formatMonedaPDF(totalFinal)}`, 20, yPos);
+                } else {
+                    doc.setTextColor(239, 68, 68);
+                    doc.text(`DEBE: ${formatMonedaPDF(Math.abs(totalFinal))}`, 20, yPos);
+                }
 
-            yPos += 12;
+                yPos += 12;
 
-            if (yPos > 260) {
-                doc.addPage();
-                yPos = 20;
-            }
-        });
+                if (yPos > 260) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+            });
+        } else {
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(100, 100, 100);
+            doc.text('No hay préstamos o gastos personales registrados', 14, yPos);
+            yPos += 15;
+        }
 
         // Nueva página para cierres
         doc.addPage();
@@ -311,28 +387,28 @@ async function generarPDFCompleto(semanaId, semanaData) {
         doc.text('CIERRES DE CAJA', 14, yPos);
         yPos += 8;
 
-        if (cierres.length > 0) {
+        if (cierres && cierres.length > 0) {
             cierres.forEach(cierre => {
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(99, 102, 241);
-                doc.text(`${cierre.dia} - Caja ${cierre.numero_caja || 1}`, 14, yPos);
+                doc.text(`${cierre.dia || 'Sin día'} - Caja ${cierre.numero_caja || 1}`, 14, yPos);
                 yPos += 8;
 
                 const cierreData = [
-                    ['Base', formatMonedaPDF(cierre.base)],
-                    ['Ventas', formatMonedaPDF(cierre.ventas)],
-                    ['Talonarios', formatMonedaPDF(cierre.talonarios)],
-                    ['Llevar', formatMonedaPDF(cierre.llevar || 0)],
-                    ['Otro', formatMonedaPDF(cierre.otro || 0)],
-                    ['Prestamos Total', formatMonedaPDF(cierre.prestamos_total || 0)],
-                    ['Diferencia', formatMonedaPDF(cierre.diferencia || 0)]
+                    ['Base', formatMonedaPDF(parseNumero(cierre.base))],
+                    ['Ventas', formatMonedaPDF(parseNumero(cierre.ventas))],
+                    ['Talonarios', formatMonedaPDF(parseNumero(cierre.talonarios))],
+                    ['Llevar', formatMonedaPDF(parseNumero(cierre.llevar))],
+                    ['Otro', formatMonedaPDF(parseNumero(cierre.otro))],
+                    ['Prestamos Total', formatMonedaPDF(parseNumero(cierre.prestamos_total))],
+                    ['Diferencia', formatMonedaPDF(parseNumero(cierre.diferencia))]
                 ];
 
                 doc.autoTable({
                     startY: yPos,
                     body: cierreData,
-                    foot: [['TOTAL EFECTIVO', formatMonedaPDF(cierre.total_efectivo)]],
+                    foot: [['TOTAL EFECTIVO', formatMonedaPDF(parseNumero(cierre.total_efectivo))]],
                     theme: 'striped',
                     footStyles: { fillColor: [16, 185, 129], textColor: [255, 255, 255], fontStyle: 'bold' },
                     margin: { left: 20 }
@@ -354,6 +430,12 @@ async function generarPDFCompleto(semanaId, semanaData) {
                     yPos = 20;
                 }
             });
+        } else {
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(100, 100, 100);
+            doc.text('No hay cierres de caja registrados', 14, yPos);
+            yPos += 15;
         }
 
         // ========== RESUMEN FINAL ==========
@@ -370,17 +452,27 @@ async function generarPDFCompleto(semanaId, semanaData) {
         yPos += 20;
         doc.setTextColor(0, 0, 0);
 
-        const totalEfectivo = cierres.reduce((sum, c) => sum + parseFloat(c.total_efectivo || 0), 0);
-        const totalOtrosGastosFinal = otrosGastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
+        const totalEfectivo = cierres.reduce((sum, c) => 
+            sum + parseNumero(c.total_efectivo), 0
+        );
+        const totalOtrosGastosFinal = otrosGastos.reduce((sum, g) => 
+            sum + parseNumero(g.monto), 0
+        );
 
         // Calcular préstamos positivos
         let totalPrestamosPositivos = 0;
-        Object.values(porPersona).forEach(datos => {
-            const totalP = datos.prestamos.reduce((sum, p) => sum + parseFloat(p.monto), 0);
-            const totalG = datos.gastos.reduce((sum, g) => sum + parseFloat(g.monto), 0);
-            const final = totalP - totalG;
-            if (final > 0) totalPrestamosPositivos += final;
-        });
+        if (porPersona) {
+            Object.values(porPersona).forEach(datos => {
+                const totalP = datos.prestamos.reduce((sum, p) => 
+                    sum + parseNumero(p.monto), 0
+                );
+                const totalG = datos.gastos.reduce((sum, g) => 
+                    sum + parseNumero(g.monto), 0
+                );
+                const final = totalP - totalG;
+                if (final > 0) totalPrestamosPositivos += final;
+            });
+        }
 
         const balanceFinal = totalEfectivo - totalFinalProductos - totalOtrosGastosFinal - totalPrestamosPositivos;
 
@@ -408,7 +500,7 @@ async function generarPDFCompleto(semanaId, semanaData) {
         doc.text(`BALANCE FINAL: ${formatMonedaPDF(balanceFinal)}`, 105, yPos + 5, { align: 'center' });
 
         // Guardar PDF
-        const nombreArchivo = `Informe_${semana.nombre.replace(/ /g, '_')}_${semana.mes}.pdf`;
+        const nombreArchivo = `Informe_${(semana.nombre || 'Semana').replace(/ /g, '_')}_${semana.mes || ''}.pdf`;
         doc.save(nombreArchivo);
 
         console.log('PDF generado exitosamente:', nombreArchivo);
