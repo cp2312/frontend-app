@@ -1,8 +1,8 @@
 // Configuración
-const API_URL = 'https://backend-express-production-a427.up.railway.app';
+const API_URL_PDF = 'https://backend-express-production-a427.up.railway.app';
 
 // Formatear moneda en pesos colombianos
-function formatMoneda(valor) {
+function formatMonedaPDF(valor) {
     return new Intl.NumberFormat('es-CO', {
         style: 'currency',
         currency: 'COP',
@@ -11,8 +11,8 @@ function formatMoneda(valor) {
     }).format(valor);
 }
 
-// Formatear fecha
-function formatFecha(fechaString) {
+// Formatear fecha para PDF
+function formatFechaPDF(fechaString) {
     const fecha = new Date(fechaString);
     return fecha.toLocaleDateString('es-ES', {
         weekday: 'long',
@@ -25,21 +25,35 @@ function formatFecha(fechaString) {
 // Generar PDF completo
 async function generarPDFCompleto(semanaId, semanaData) {
     try {
+        console.log('Iniciando generación de PDF...');
+        console.log('Semana ID:', semanaId);
+        console.log('Semana Data:', semanaData);
+        
+        // Verificar que jsPDF esté cargado
+        if (typeof window.jspdf === 'undefined') {
+            alert('❌ Error: La librería jsPDF no está cargada. Por favor, recarga la página.');
+            return;
+        }
+
         // Mostrar loading
         const btn = document.querySelector('.btn-generar-pdf');
         if (btn) {
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando PDF...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
             btn.disabled = true;
         }
 
+        console.log('Cargando datos de la API...');
+
         // Cargar todos los datos
         const [productos, cierres, otrosGastos, prestamos, semana] = await Promise.all([
-            fetch(`${API_URL}/api/productos/semana/${semanaId}`).then(r => r.json()),
-            fetch(`${API_URL}/api/cierres/semana/${semanaId}`).then(r => r.json()),
-            fetch(`${API_URL}/api/otros/semana/${semanaId}`).then(r => r.json()),
-            fetch(`${API_URL}/api/prestamos/semana/${semanaId}`).then(r => r.json()),
-            semanaData || fetch(`${API_URL}/api/semanas/${semanaId}`).then(r => r.json())
+            fetch(`${API_URL_PDF}/api/productos/semana/${semanaId}`).then(r => r.json()),
+            fetch(`${API_URL_PDF}/api/cierres/semana/${semanaId}`).then(r => r.json()),
+            fetch(`${API_URL_PDF}/api/otros/semana/${semanaId}`).then(r => r.json()),
+            fetch(`${API_URL_PDF}/api/prestamos/semana/${semanaId}`).then(r => r.json()),
+            semanaData || fetch(`${API_URL_PDF}/api/semanas/${semanaId}`).then(r => r.json())
         ]);
+
+        console.log('Datos cargados:', { productos, cierres, otrosGastos, prestamos, semana });
 
         // Crear documento PDF
         const { jsPDF } = window.jspdf;
@@ -59,7 +73,7 @@ async function generarPDFCompleto(semanaId, semanaData) {
         doc.setFontSize(12);
         doc.setFont('helvetica', 'normal');
         doc.text(`${semana.nombre || 'Semana'} - ${semana.mes || ''}`, 105, 28, { align: 'center' });
-        doc.text(formatFecha(semana.fecha), 105, 34, { align: 'center' });
+        doc.text(formatFechaPDF(semana.fecha), 105, 34, { align: 'center' });
 
         yPos = 50;
         doc.setTextColor(0, 0, 0);
@@ -68,7 +82,7 @@ async function generarPDFCompleto(semanaId, semanaData) {
         doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(59, 130, 246);
-        doc.text('📦 PRODUCTOS', 14, yPos);
+        doc.text('PRODUCTOS', 14, yPos);
         yPos += 8;
 
         const PRODUCTOS_ESTATICOS = ['Costilla', 'Asadura', 'Creadillas', 'Patas', 'Cabezas', 'Menudos', 'Manteca', 'Sangre', 'Guia'];
@@ -78,9 +92,9 @@ async function generarPDFCompleto(semanaId, semanaData) {
 
         const productosData = productosReales.map(p => [
             p.nombre,
-            formatMoneda(p.precio_unitario),
+            formatMonedaPDF(p.precio_unitario),
             p.libras.toFixed(2),
-            formatMoneda(p.precio_unitario * p.libras)
+            formatMonedaPDF(p.precio_unitario * p.libras)
         ]);
 
         const totalProductos = productosReales.reduce((sum, p) => 
@@ -91,7 +105,7 @@ async function generarPDFCompleto(semanaId, semanaData) {
             startY: yPos,
             head: [['Producto', 'Precio Unitario', 'Libras', 'Total']],
             body: productosData,
-            foot: [['TOTAL PRODUCTOS', '', '', formatMoneda(totalProductos)]],
+            foot: [['TOTAL PRODUCTOS', '', '', formatMonedaPDF(totalProductos)]],
             theme: 'grid',
             headStyles: { fillColor: [59, 130, 246], fontStyle: 'bold' },
             footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' }
@@ -108,12 +122,12 @@ async function generarPDFCompleto(semanaId, semanaData) {
             doc.setFontSize(16);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(251, 146, 60);
-            doc.text('💰 GASTOS (En Productos)', 14, yPos);
+            doc.text('GASTOS (En Productos)', 14, yPos);
             yPos += 8;
 
             const gastosProductosData = gastosEnProductos.map(g => [
                 g.nombre,
-                formatMoneda(g.precio_unitario)
+                formatMonedaPDF(g.precio_unitario)
             ]);
 
             const totalGastosProductos = gastosEnProductos.reduce((sum, g) => 
@@ -124,7 +138,7 @@ async function generarPDFCompleto(semanaId, semanaData) {
                 startY: yPos,
                 head: [['Concepto', 'Valor']],
                 body: gastosProductosData,
-                foot: [['TOTAL GASTOS', formatMoneda(totalGastosProductos)]],
+                foot: [['TOTAL GASTOS', formatMonedaPDF(totalGastosProductos)]],
                 theme: 'grid',
                 headStyles: { fillColor: [251, 146, 60], fontStyle: 'bold' },
                 footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' }
@@ -144,7 +158,7 @@ async function generarPDFCompleto(semanaId, semanaData) {
         doc.setFillColor(59, 130, 246);
         doc.setTextColor(255, 255, 255);
         doc.rect(14, yPos - 5, 182, 10, 'F');
-        doc.text(`TOTAL FINAL PRODUCTOS: ${formatMoneda(totalFinalProductos)}`, 105, yPos + 2, { align: 'center' });
+        doc.text(`TOTAL FINAL PRODUCTOS: ${formatMonedaPDF(totalFinalProductos)}`, 105, yPos + 2, { align: 'center' });
         yPos += 15;
 
         // Nueva página si es necesario
@@ -158,14 +172,14 @@ async function generarPDFCompleto(semanaId, semanaData) {
         doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(245, 158, 11);
-        doc.text('🧾 OTROS GASTOS', 14, yPos);
+        doc.text('OTROS GASTOS', 14, yPos);
         yPos += 8;
 
         if (otrosGastos.length > 0) {
             const otrosGastosData = otrosGastos.map(g => [
-                formatFecha(g.fecha),
+                formatFechaPDF(g.fecha),
                 g.concepto,
-                formatMoneda(g.monto)
+                formatMonedaPDF(g.monto)
             ]);
 
             const totalOtrosGastos = otrosGastos.reduce((sum, g) => 
@@ -176,7 +190,7 @@ async function generarPDFCompleto(semanaId, semanaData) {
                 startY: yPos,
                 head: [['Fecha', 'Concepto', 'Monto']],
                 body: otrosGastosData,
-                foot: [['', 'TOTAL OTROS GASTOS', formatMoneda(totalOtrosGastos)]],
+                foot: [['', 'TOTAL OTROS GASTOS', formatMonedaPDF(totalOtrosGastos)]],
                 theme: 'grid',
                 headStyles: { fillColor: [245, 158, 11], fontStyle: 'bold' },
                 footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' }
@@ -200,7 +214,7 @@ async function generarPDFCompleto(semanaId, semanaData) {
         doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(239, 68, 68);
-        doc.text('👥 PRÉSTAMOS Y GASTOS PERSONALES', 14, yPos);
+        doc.text('PRESTAMOS Y GASTOS PERSONALES', 14, yPos);
         yPos += 8;
 
         // Agrupar por persona
@@ -221,19 +235,19 @@ async function generarPDFCompleto(semanaId, semanaData) {
             doc.setFontSize(12);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(99, 102, 241);
-            doc.text(`👤 ${persona}`, 14, yPos);
+            doc.text(`${persona}`, 14, yPos);
             yPos += 8;
 
             // Préstamos
             if (datos.prestamos.length > 0) {
-                const prestamosData = datos.prestamos.map(p => [p.concepto, formatMoneda(p.monto)]);
+                const prestamosData = datos.prestamos.map(p => [p.concepto, formatMonedaPDF(p.monto)]);
                 const totalPrestamos = datos.prestamos.reduce((sum, p) => sum + parseFloat(p.monto), 0);
 
                 doc.autoTable({
                     startY: yPos,
-                    head: [['Préstamos - Concepto', 'Monto']],
+                    head: [['Prestamos - Concepto', 'Monto']],
                     body: prestamosData,
-                    foot: [['Total Préstamos', formatMoneda(totalPrestamos)]],
+                    foot: [['Total Prestamos', formatMonedaPDF(totalPrestamos)]],
                     theme: 'plain',
                     headStyles: { fillColor: [16, 185, 129], fontStyle: 'bold', fontSize: 10 },
                     footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' },
@@ -245,14 +259,14 @@ async function generarPDFCompleto(semanaId, semanaData) {
 
             // Gastos
             if (datos.gastos.length > 0) {
-                const gastosData = datos.gastos.map(g => [g.concepto, formatMoneda(g.monto)]);
+                const gastosData = datos.gastos.map(g => [g.concepto, formatMonedaPDF(g.monto)]);
                 const totalGastos = datos.gastos.reduce((sum, g) => sum + parseFloat(g.monto), 0);
 
                 doc.autoTable({
                     startY: yPos,
                     head: [['Gastos - Concepto', 'Monto']],
                     body: gastosData,
-                    foot: [['Total Gastos', formatMoneda(totalGastos)]],
+                    foot: [['Total Gastos', formatMonedaPDF(totalGastos)]],
                     theme: 'plain',
                     headStyles: { fillColor: [239, 68, 68], fontStyle: 'bold', fontSize: 10 },
                     footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' },
@@ -271,10 +285,10 @@ async function generarPDFCompleto(semanaId, semanaData) {
             doc.setFont('helvetica', 'bold');
             if (totalFinal >= 0) {
                 doc.setTextColor(16, 185, 129);
-                doc.text(`✅ Total Final: ${formatMoneda(totalFinal)}`, 20, yPos);
+                doc.text(`Total Final: ${formatMonedaPDF(totalFinal)}`, 20, yPos);
             } else {
                 doc.setTextColor(239, 68, 68);
-                doc.text(`⚠️ DEBE: ${formatMoneda(Math.abs(totalFinal))}`, 20, yPos);
+                doc.text(`DEBE: ${formatMonedaPDF(Math.abs(totalFinal))}`, 20, yPos);
             }
 
             yPos += 12;
@@ -294,7 +308,7 @@ async function generarPDFCompleto(semanaId, semanaData) {
         doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(16, 185, 129);
-        doc.text('💵 CIERRES DE CAJA', 14, yPos);
+        doc.text('CIERRES DE CAJA', 14, yPos);
         yPos += 8;
 
         if (cierres.length > 0) {
@@ -302,23 +316,23 @@ async function generarPDFCompleto(semanaId, semanaData) {
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(99, 102, 241);
-                doc.text(`📅 ${cierre.dia} - Caja ${cierre.numero_caja || 1}`, 14, yPos);
+                doc.text(`${cierre.dia} - Caja ${cierre.numero_caja || 1}`, 14, yPos);
                 yPos += 8;
 
                 const cierreData = [
-                    ['Base', formatMoneda(cierre.base)],
-                    ['Ventas', formatMoneda(cierre.ventas)],
-                    ['Talonarios', formatMoneda(cierre.talonarios)],
-                    ['Llevar', formatMoneda(cierre.llevar || 0)],
-                    ['Otro', formatMoneda(cierre.otro || 0)],
-                    ['Préstamos Total', formatMoneda(cierre.prestamos_total || 0)],
-                    ['Diferencia', formatMoneda(cierre.diferencia || 0)]
+                    ['Base', formatMonedaPDF(cierre.base)],
+                    ['Ventas', formatMonedaPDF(cierre.ventas)],
+                    ['Talonarios', formatMonedaPDF(cierre.talonarios)],
+                    ['Llevar', formatMonedaPDF(cierre.llevar || 0)],
+                    ['Otro', formatMonedaPDF(cierre.otro || 0)],
+                    ['Prestamos Total', formatMonedaPDF(cierre.prestamos_total || 0)],
+                    ['Diferencia', formatMonedaPDF(cierre.diferencia || 0)]
                 ];
 
                 doc.autoTable({
                     startY: yPos,
                     body: cierreData,
-                    foot: [['TOTAL EFECTIVO', formatMoneda(cierre.total_efectivo)]],
+                    foot: [['TOTAL EFECTIVO', formatMonedaPDF(cierre.total_efectivo)]],
                     theme: 'striped',
                     footStyles: { fillColor: [16, 185, 129], textColor: [255, 255, 255], fontStyle: 'bold' },
                     margin: { left: 20 }
@@ -351,7 +365,7 @@ async function generarPDFCompleto(semanaId, semanaData) {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
-        doc.text('📊 RESUMEN FINANCIERO FINAL', 105, yPos, { align: 'center' });
+        doc.text('RESUMEN FINANCIERO FINAL', 105, yPos, { align: 'center' });
 
         yPos += 20;
         doc.setTextColor(0, 0, 0);
@@ -371,10 +385,10 @@ async function generarPDFCompleto(semanaId, semanaData) {
         const balanceFinal = totalEfectivo - totalFinalProductos - totalOtrosGastosFinal - totalPrestamosPositivos;
 
         const resumenData = [
-            ['💰 Efectivo Total (Cierres)', formatMoneda(totalEfectivo)],
-            ['📦 Total Final Productos', `- ${formatMoneda(totalFinalProductos)}`],
-            ['🧾 Otros Gastos', `- ${formatMoneda(totalOtrosGastosFinal)}`],
-            ['👥 Préstamos Positivos', `- ${formatMoneda(totalPrestamosPositivos)}`]
+            ['Efectivo Total (Cierres)', formatMonedaPDF(totalEfectivo)],
+            ['Total Final Productos', `- ${formatMonedaPDF(totalFinalProductos)}`],
+            ['Otros Gastos', `- ${formatMonedaPDF(totalOtrosGastosFinal)}`],
+            ['Prestamos Positivos', `- ${formatMonedaPDF(totalPrestamosPositivos)}`]
         ];
 
         doc.autoTable({
@@ -391,15 +405,17 @@ async function generarPDFCompleto(semanaId, semanaData) {
         doc.setFillColor(balanceFinal >= 0 ? 16 : 239, balanceFinal >= 0 ? 185 : 68, balanceFinal >= 0 ? 129 : 68);
         doc.setTextColor(255, 255, 255);
         doc.rect(14, yPos - 5, 182, 15, 'F');
-        doc.text(`💵 BALANCE FINAL: ${formatMoneda(balanceFinal)}`, 105, yPos + 5, { align: 'center' });
+        doc.text(`BALANCE FINAL: ${formatMonedaPDF(balanceFinal)}`, 105, yPos + 5, { align: 'center' });
 
         // Guardar PDF
         const nombreArchivo = `Informe_${semana.nombre.replace(/ /g, '_')}_${semana.mes}.pdf`;
         doc.save(nombreArchivo);
 
+        console.log('PDF generado exitosamente:', nombreArchivo);
+
         // Restaurar botón
         if (btn) {
-            btn.innerHTML = '<i class="fas fa-file-pdf"></i> Generar PDF Completo';
+            btn.innerHTML = '<i class="fas fa-file-pdf"></i> Generar PDF';
             btn.disabled = false;
         }
 
@@ -411,13 +427,8 @@ async function generarPDFCompleto(semanaId, semanaData) {
         
         const btn = document.querySelector('.btn-generar-pdf');
         if (btn) {
-            btn.innerHTML = '<i class="fas fa-file-pdf"></i> Generar PDF Completo';
+            btn.innerHTML = '<i class="fas fa-file-pdf"></i> Generar PDF';
             btn.disabled = false;
         }
     }
-}
-
-// Exportar función
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { generarPDFCompleto };
 }
